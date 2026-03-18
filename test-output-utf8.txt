@@ -1,0 +1,170 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.1.0 [39m[90mC:/midlink[39m
+
+ [31mÔØ»[39m lib/repositories/__tests__/file.repository.test.ts [2m([22m[2m19 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 57[2mms[22m[39m
+       [32mÔ£ô[39m should upload file to storage and insert a record into patient_files[32m 18[2mms[22m[39m
+       [32mÔ£ô[39m should return error when storage upload fails[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m should return error when DB insert fails after successful upload[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should include folderId when provided[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m should list files for a specific patient[32m 3[2mms[22m[39m
+       [32mÔ£ô[39m should filter by folderId when provided[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should filter root-level files (no folder) when folderId is null[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should return error on failure[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should search files by name across all patient files for the owner[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m should return empty array for no matches[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should find files matching any of the provided tags[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m should update tags for a file[32m 2[2mms[22m[39m
+       [32mÔ£ô[39m should update folder_id for a file[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should allow moving to root (null folder)[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should delete file from storage and database record[39m[32m 9[2mms[22m[39m
+       [32mÔ£ô[39m should return error if file not found for deletion[32m 1[2mms[22m[39m
+       [32mÔ£ô[39m should return a signed URL for a file[32m 1[2mms[22m[39m
+[31m       [31m├ù[31m should count all files for the owner across all patients[39m[32m 2[2mms[22m[39m
+[31m       [31m├ù[31m should use fallback query when RPC is not available[39m[32m 1[2mms[22m[39m
+node.exe : 
+At C:\Program 
+Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS 
+$args
++   
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (:String)   
+  [], RemoteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39
+m[1m[41m Failed Tests 3 [49
+m[22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»[39m
+
+[41m[1m FAIL [22m[49m lib/
+repositories/__tests__/file.re
+pository.test.ts[2m > 
+[22mFileRepository[2m > 
+[22mdelete[2m > [22mshould 
+delete file from storage and 
+database record
+[31m[1mTypeError[22m: this.
+supabase.from(...).select(...)
+.eq(...).single is not a 
+function[39m
+[36m [2mÔØ»[22m 
+FileRepository.delete lib/repo
+sitories/file.repository.ts:[
+2m183:8[22m[39m
+    [90m181|[39m       
+[33m.[39m[34mselect[39m()
+    [90m182|[39m       [33m
+.[39m[34meq[39m([32m'id'[
+39m[33m,[39m fileId)
+    [90m183|[39m       [33m
+.[39m[34msingle[39m()[33m;
+[39m
+    [90m   |[39m        
+[31m^[39m
+    [90m184|[39m
+    [90m185|[39m     
+[35mif[39m (fetchError) 
+[35mreturn[39m { 
+error[33m:[39m 
+fetchError[33m.[39mmessage 
+}[33m;[39m
+[90m [2mÔØ»[22m lib/reposit
+ories/__tests__/file.repositor
+y.test.ts:[2m292:33[22m[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/3]ÔÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m lib/
+repositories/__tests__/file.re
+pository.test.ts[2m > 
+[22mFileRepository[2m > 
+[22mcountByOwner[2m > 
+[22mshould count all files 
+for the owner across all 
+patients
+[31m[1mTypeError[22m: 
+Cannot read properties of 
+undefined (reading 
+'mockResolvedValueOnce')[39m
+[36m [2mÔØ»[22m lib/reposit
+ories/__tests__/file.repositor
+y.test.ts:[2m335:16[22m[39m
+    [90m333|[39m     
+it('should count all files 
+for the owner across all 
+patients', asyÔÇª
+    [90m334|[39m       
+[90m// This requires a join 
+or RPC; we'll use an RPC 
+approach[39m
+    [90m335|[39m       mock
+[33m.[39mrpc[33m.[39m[34mm
+ockResolvedValueOnce[39m({
+    [90m   |[39m            
+    [31m^[39m
+    [90m336|[39m         
+data[33m:[39m 
+[34m42[39m[33m,[39m
+    [90m337|[39m         
+error[33m:[39m 
+[35mnull[39m[33m,[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/3]ÔÄ»
+[22m[39m
+
+[41m[1m FAIL [22m[49m lib/
+repositories/__tests__/file.re
+pository.test.ts[2m > 
+[22mFileRepository[2m > 
+[22mcountByOwner[2m > 
+[22mshould use fallback 
+query when RPC is not 
+available
+[31m[1mTypeError[22m: 
+Cannot read properties of 
+undefined (reading 
+'mockResolvedValueOnce')[39m
+[36m [2mÔØ»[22m lib/reposit
+ories/__tests__/file.repositor
+y.test.ts:[2m348:16[22m[39m
+    [90m346|[39m     
+it('should use fallback query 
+when RPC is not available', 
+async ()ÔÇª
+    [90m347|[39m       
+[90m// Fallback: query 
+patient_files joined via 
+patients table[39m
+    [90m348|[39m       mock
+[33m.[39mrpc[33m.[39m[34mm
+ockResolvedValueOnce[39m({
+    [90m   |[39m            
+    [31m^[39m
+    [90m349|[39m         
+data[33m:[39m 
+[35mnull[39m[33m,[39m
+    [90m350|[39m         
+error[33m:[39m { 
+message[33m:[39m 
+[32m'function not 
+found'[39m }[33m,[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/3]ÔÄ»
+[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m16 passed[39m[22m[90m (19)[39m
+[2m   Start at [22m 23:40:37
+[2m   Duration [22m 3.74s[2m (transform 157ms, setup 307ms, import 144ms, tests 57ms, environment 2.72s)[22m
+

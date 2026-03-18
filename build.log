@@ -1,0 +1,32 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+Failed to compile.
+System.Management.Automation.RemoteException
+./lib/supabase/server.ts
+Error: 
+  [31mx[0m You're importing a component that needs next/headers. That only works in a Server Component which is not supported in the pages/ directory. Read more: https://nextjs.org/docs/getting-started/
+  [31m|[0m react-essentials#server-components
+  [31m|[0m 
+  [31m|[0m 
+   ,-[[36;1;4mC:\midlink\lib\supabase\server.ts[0m:1:1]
+ [2m1[0m | import { createServerClient, type CookieOptions } from '@supabase/ssr'
+ [2m2[0m | import { cookies } from 'next/headers'
+   : [31;1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m3[0m | 
+ [2m4[0m | export function createClient() {
+ [2m5[0m |   const cookieStore = cookies()
+   `----
+System.Management.Automation.RemoteException
+Import trace for requested module:
+./lib/supabase/server.ts
+./app/(dashboard)/patients/actions.ts
+./app/(dashboard)/patients/PatientClientList.tsx
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+> Build failed because of webpack errors

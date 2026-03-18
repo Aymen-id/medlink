@@ -1,0 +1,12 @@
+﻿
+> medilink@0.1.0 lint
+> next lint
+
+System.Management.Automation.RemoteException
+./app/(dashboard)/patients/[id]/actions.ts
+7:10  Error: 'PatientRepository' is defined but never used.  @typescript-eslint/no-unused-vars
+System.Management.Automation.RemoteException
+./app/(dashboard)/patients/[id]/ClientViews.tsx
+27:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+System.Management.Automation.RemoteException
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

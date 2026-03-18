@@ -1,0 +1,50 @@
+
+=== BUILD ===
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/11) ...
+   Generating static pages (2/11) 
+   Generating static pages (5/11) 
+   Generating static pages (8/11) 
+ ✓ Generating static pages (11/11)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    5.34 kB        92.7 kB
+├ ○ /_not-found                          873 B          88.2 kB
+├ ○ /analytics                           150 B          87.5 kB
+├ ○ /login                               2.49 kB         206 kB
+├ ○ /patients                            150 B          87.5 kB
+├ ○ /reset-password                      3.13 kB         206 kB
+├ ○ /settings                            150 B          87.5 kB
+└ ○ /signup                              2.99 kB         206 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/117-aec1501019d14fbf.js       31.7 kB
+  ├ chunks/fd9d1056-ebaa042f8a0e6807.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             74.9 kB
+
+○  (Static)  prerendered as static content
+
+
+✅ BUILD PASSED
+
+=== TYPECHECK ===
+
+✅ TYPECHECK PASSED
+
+=== LINT ===
+✔ No ESLint warnings or errors
+
+✅ LINT PASSED
+
+=== SUMMARY ===
+✅ ALL CHECKS PASSED

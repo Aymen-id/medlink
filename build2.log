@@ -1,0 +1,19 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (140kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+System.Management.Automation.RemoteException
+Failed to compile.
+System.Management.Automation.RemoteException
+./app/api/patients/[id]/export/route.ts
+33:40  Error: 'downloadError' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+54:17  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+System.Management.Automation.RemoteException
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

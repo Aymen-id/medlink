@@ -1,0 +1,1 @@
+﻿lib/repositories/__tests__/file.repository.test.ts(164,14): error TS18047: 'result.data' is possibly 'null'.
