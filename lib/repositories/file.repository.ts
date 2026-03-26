@@ -47,6 +47,22 @@ export class FileRepository {
     private readonly ownerId: string,
   ) {}
 
+  /**
+   * Fetches a file record only if it belongs to a patient owned by this.ownerId.
+   * Defense-in-depth: prevents cross-owner access even if RLS is misconfigured.
+   */
+  private async fetchOwnedFile(fileId: string): Promise<{ data: FileRow | null; error: string | null }> {
+    const { data, error } = await this.supabase
+      .from('patient_files')
+      .select('*, patients!inner(owner_id)')
+      .eq('id', fileId)
+      .eq('patients.owner_id', this.ownerId)
+      .single();
+
+    if (error) return { data: null, error: error.message };
+    return { data: data as FileRow, error: null };
+  }
+
   // ---- UPLOAD ----
   async upload(params: UploadFileParams): Promise<ApiResponse<PatientFile>> {
     const { patientId, file, folderId, tags } = params;
@@ -93,8 +109,9 @@ export class FileRepository {
   ): Promise<ApiResponse<PatientFile[]>> {
     let query = this.supabase
       .from('patient_files')
-      .select()
-      .eq('patient_id', patientId);
+      .select('*, patients!inner(owner_id)')
+      .eq('patient_id', patientId)
+      .eq('patients.owner_id', this.ownerId);
 
     if (options !== undefined && 'folderId' in options) {
       if (options.folderId === null) {
@@ -115,7 +132,8 @@ export class FileRepository {
   async search(query: string): Promise<ApiResponse<PatientFile[]>> {
     const { data, error } = await this.supabase
       .from('patient_files')
-      .select()
+      .select('*, patients!inner(owner_id)')
+      .eq('patients.owner_id', this.ownerId)
       .ilike('file_name', `%${query}%`)
       .order('created_at', { ascending: false });
 
@@ -131,8 +149,9 @@ export class FileRepository {
   ): Promise<ApiResponse<PatientFile[]>> {
     const { data, error } = await this.supabase
       .from('patient_files')
-      .select()
+      .select('*, patients!inner(owner_id)')
       .eq('patient_id', patientId)
+      .eq('patients.owner_id', this.ownerId)
       .contains('tags', tags)
       .order('created_at', { ascending: false });
 
@@ -146,6 +165,10 @@ export class FileRepository {
     fileId: string,
     tags: string[],
   ): Promise<ApiResponse<PatientFile>> {
+    // Verify ownership first
+    const owned = await this.fetchOwnedFile(fileId);
+    if (owned.error || !owned.data) return { data: null, error: owned.error ?? 'File not found' };
+
     const { data, error } = await this.supabase
       .from('patient_files')
       .update({ tags })
@@ -162,6 +185,10 @@ export class FileRepository {
     fileId: string,
     folderId: string | null,
   ): Promise<ApiResponse<PatientFile>> {
+    // Verify ownership first
+    const owned = await this.fetchOwnedFile(fileId);
+    if (owned.error || !owned.data) return { data: null, error: owned.error ?? 'File not found' };
+
     const { data, error } = await this.supabase
       .from('patient_files')
       .update({ folder_id: folderId })
@@ -175,21 +202,15 @@ export class FileRepository {
 
   // ---- DELETE ----
   async delete(fileId: string): Promise<{ error: string | null }> {
-    // 1. Fetch the file to get its storage_path
-    const { data: fileData, error: fetchError } = await this.supabase
-      .from('patient_files')
-      .select()
-      .eq('id', fileId)
-      .single();
+    // 1. Fetch the file with ownership verification
+    const { data: ownedFile, error: fetchError } = await this.fetchOwnedFile(fileId);
 
-    if (fetchError) return { error: fetchError.message };
-
-    const row = fileData as FileRow;
+    if (fetchError || !ownedFile) return { error: fetchError ?? 'File not found' };
 
     // 2. Remove from storage
     const { error: storageError } = await this.supabase.storage
       .from(STORAGE_BUCKET)
-      .remove([row.storage_path]);
+      .remove([ownedFile.storage_path]);
 
     if (storageError) return { error: storageError.message };
 
@@ -207,21 +228,15 @@ export class FileRepository {
     fileId: string,
     expiresInSeconds = 3600,
   ): Promise<ApiResponse<string>> {
-    // 1. Fetch the file to get storage_path
-    const { data: fileData, error: fetchError } = await this.supabase
-      .from('patient_files')
-      .select()
-      .eq('id', fileId)
-      .single();
+    // 1. Fetch the file with ownership verification
+    const { data: ownedFile, error: fetchError } = await this.fetchOwnedFile(fileId);
 
-    if (fetchError) return { data: null, error: fetchError.message };
-
-    const row = fileData as FileRow;
+    if (fetchError || !ownedFile) return { data: null, error: fetchError ?? 'File not found' };
 
     // 2. Create signed URL
     const { data, error } = await this.supabase.storage
       .from(STORAGE_BUCKET)
-      .createSignedUrl(row.storage_path, expiresInSeconds);
+      .createSignedUrl(ownedFile.storage_path, expiresInSeconds);
 
     if (error) return { data: null, error: error.message };
     return { data: data.signedUrl, error: null };

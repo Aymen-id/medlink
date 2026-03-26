@@ -1,0 +1,76 @@
+﻿
+ RUN  v4.1.0 C:/midlink
+
+ Ô£ô lib/repositories/__tests__/note.repository.test.ts (10 tests) 28ms
+ Ô£ô lib/repositories/__tests__/patient.repository.test.ts (15 tests) 38ms
+ Ô£ô lib/repositories/__tests__/auth.repository.test.ts (5 tests) 17ms
+ Ô£ô lib/schemas/__tests__/auth.schema.test.ts (5 tests) 15ms
+ Ô£ô lib/repositories/__tests__/staff.repository.test.ts (7 tests) 22ms
+ Ô£ô lib/repositories/__tests__/folder.repository.test.ts (10 tests) 25ms
+ Ô£ô lib/repositories/__tests__/profile.repository.test.ts (11 tests) 26ms
+ Ô£ô lib/repositories/__tests__/file.repository.test.ts (19 tests) 54ms
+ Ô£ô lib/schemas/__tests__/patient.schema.test.ts (3 tests) 8ms
+ Ô£ô components/ui/__tests__/shared-ui.test.tsx (8 tests) 107ms
+ Ô£ô components/dashboard/__tests__/Sidebar.test.tsx (6 tests) 111ms
+stderr | components/dashboard/__tests__/TopBar.test.tsx > TopBar > renders search input
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+System.Management.Automation.RemoteException
+Check the render method of `DialogTrigger`.
+    at Button (C:/midlink/components/ui/button.tsx:39:19)
+    at DialogTrigger (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/trigger/DialogTrigger.js:22:5)
+    at SheetTrigger (C:/midlink/components/ui/sheet.tsx:33:28)
+    at DialogRoot (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/root/DialogRoot.js:18:5)
+    at Sheet (C:/midlink/components/ui/sheet.tsx:23:21)
+    at MobileSidebar (C:/midlink/components/dashboard/Sidebar.tsx:210:26)
+    at header
+    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+System.Management.Automation.RemoteException
+Check the render method of `MenuTrigger`.
+    at Button (C:/midlink/components/ui/button.tsx:39:19)
+    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
+    at DropdownMenuTrigger (C:/midlink/components/ui/dropdown-menu.tsx:48:35)
+    at FloatingTree (file:///C:/midlink/node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingTree.js:83:5)
+    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
+    at DropdownMenu (C:/midlink/components/ui/dropdown-menu.tsx:28:28)
+    at header
+    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
+System.Management.Automation.RemoteException
+stderr | components/dashboard/__tests__/DashboardShell.test.tsx > DashboardShell > renders children content
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+System.Management.Automation.RemoteException
+Check the render method of `DialogTrigger`.
+    at Button (C:/midlink/components/ui/button.tsx:39:19)
+    at DialogTrigger (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/trigger/DialogTrigger.js:22:5)
+    at SheetTrigger (C:/midlink/components/ui/sheet.tsx:33:28)
+    at DialogRoot (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/root/DialogRoot.js:18:5)
+    at Sheet (C:/midlink/components/ui/sheet.tsx:23:21)
+    at MobileSidebar (C:/midlink/components/dashboard/Sidebar.tsx:210:26)
+    at header
+    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
+    at div
+    at div
+    at DashboardShell (C:/midlink/components/dashboard/DashboardShell.tsx:10:27)
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+System.Management.Automation.RemoteException
+Check the render method of `MenuTrigger`.
+    at Button (C:/midlink/components/ui/button.tsx:39:19)
+    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
+    at DropdownMenuTrigger (C:/midlink/components/ui/dropdown-menu.tsx:48:35)
+    at FloatingTree (file:///C:/midlink/node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingTree.js:83:5)
+    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
+    at DropdownMenu (C:/midlink/components/ui/dropdown-menu.tsx:28:28)
+    at header
+    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
+    at div
+    at div
+    at DashboardShell (C:/midlink/components/dashboard/DashboardShell.tsx:10:27)
+System.Management.Automation.RemoteException
+ Ô£ô components/dashboard/__tests__/TopBar.test.tsx (4 tests) 114ms
+ Ô£ô components/dashboard/__tests__/DashboardShell.test.tsx (3 tests) 135ms
+
+ Test Files  13 passed (13)
+      Tests  106 passed (106)
+   Start at  23:59:58
+   Duration  5.01s (transform 1.64s, setup 2.92s, import 5.56s, tests 701ms, environment 40.13s)
+

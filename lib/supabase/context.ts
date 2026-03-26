@@ -11,15 +11,26 @@ export type UserContext = {
   avatarUrl?: string | null;
 };
 
+/**
+ * Resolves the current authenticated user's context in a single optimized flow.
+ * 
+ * Optimization: We first check doctor_profiles (most common case for solo physicians).
+ * If that hits, we return immediately (1 auth call + 1 DB call = 2 total).
+ * The staff path is the rare case, adding one more query only when needed.
+ * 
+ * Future optimization: combine into a single RPC call or cache in session cookie.
+ */
 export async function getUserContext(): Promise<UserContext | null> {
   const supabase = createClient();
+
+  // 1. Auth check (required, ~1 call)
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return null;
 
-  // Check if they are a doctor (owner)
+  // 2. Check owner profile (most common path — 1 DB call)
   const { data: profile } = await supabase
     .from('doctor_profiles')
     .select('id, display_name, avatar_url')
@@ -31,22 +42,20 @@ export async function getUserContext(): Promise<UserContext | null> {
       userId: user.id,
       email: user.email ?? null,
       role: 'owner',
-      ownerId: profile.id, // owners act on their own profile
+      ownerId: profile.id,
       displayName: profile.display_name,
       avatarUrl: profile.avatar_url,
     };
   }
 
-  // If not owner, check staff access
+  // 3. Staff path (rare — only if user is NOT a doctor, +1 DB call)
   const { data: access } = await supabase
     .from('staff_access')
-    .select('owner_id, role, permissions, doctor_profiles:owner_id(display_name, avatar_url)')
+    .select('owner_id, role, permissions')
     .eq('staff_user_id', user.id)
     .single();
 
   if (access) {
-    // Note: the display_name and avatar_url from doctor_profiles here belong to the owner.
-    // We can just return the user's email if they are staff.
     return {
       userId: user.id,
       email: user.email ?? null,

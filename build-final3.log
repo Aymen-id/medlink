@@ -1,0 +1,41 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/11) ...
+   Generating static pages (2/11) 
+   Generating static pages (5/11) 
+   Generating static pages (8/11) 
+ Ô£ô Generating static pages (11/11)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Ôöî Ôùï /                                    5.34 kB        92.7 kB
+Ôö£ Ôùï /_not-found                          873 B          88.2 kB
+Ôö£ ãÆ /analytics                           142 B          87.5 kB
+Ôö£ ãÆ /api/patients/[id]/export            0 B                0 B
+Ôö£ Ôùï /login                               2.7 kB          209 kB
+Ôö£ ãÆ /patients                            4.48 kB         173 kB
+Ôö£ ãÆ /patients/[id]                       12.2 kB         141 kB
+Ôö£ Ôùï /reset-password                      3.33 kB         209 kB
+Ôö£ ãÆ /settings                            142 B          87.5 kB
+Ôöö Ôùï /signup                              3.03 kB         209 kB
++ First Load JS shared by all            87.3 kB
+  Ôö£ chunks/117-1e70e62cc7a4ea04.js       31.7 kB
+  Ôö£ chunks/fd9d1056-88e4015c43d025b0.js  53.6 kB
+  Ôöö other shared chunks (total)          1.95 kB
+
+
+ãÆ Middleware                             75.1 kB
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

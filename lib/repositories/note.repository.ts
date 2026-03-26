@@ -25,9 +25,42 @@ export class NoteRepository {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly authorId: string,
+    private readonly ownerId: string,
   ) {}
 
+  /**
+   * Verifies the target patient belongs to this.ownerId (defense-in-depth).
+   */
+  private async verifyPatientOwnership(patientId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('patients')
+      .select('id')
+      .eq('id', patientId)
+      .eq('owner_id', this.ownerId)
+      .single();
+
+    return data !== null;
+  }
+
+  /**
+   * Verifies a note belongs to a patient owned by this.ownerId.
+   */
+  private async verifyNoteOwnership(noteId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('appointment_notes')
+      .select('*, patients!inner(owner_id)')
+      .eq('id', noteId)
+      .eq('patients.owner_id', this.ownerId)
+      .single();
+
+    return data !== null;
+  }
+
   async create(input: CreateNoteInput): Promise<ApiResponse<AppointmentNote>> {
+    // Verify patient ownership
+    const isOwned = await this.verifyPatientOwnership(input.patientId);
+    if (!isOwned) return { data: null, error: 'Patient not found or access denied' };
+
     const { data, error } = await this.supabase
       .from('appointment_notes')
       .insert({
@@ -53,8 +86,9 @@ export class NoteRepository {
 
     const { data, error, count } = await this.supabase
       .from('appointment_notes')
-      .select('*', { count: 'exact' })
+      .select('*, patients!inner(owner_id)', { count: 'exact' })
       .eq('patient_id', patientId)
+      .eq('patients.owner_id', this.ownerId)
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -84,6 +118,10 @@ export class NoteRepository {
     id: string,
     input: UpdateNoteInput,
   ): Promise<ApiResponse<AppointmentNote>> {
+    // Verify note belongs to an owned patient
+    const isOwned = await this.verifyNoteOwnership(id);
+    if (!isOwned) return { data: null, error: 'Note not found or access denied' };
+
     const { data, error } = await this.supabase
       .from('appointment_notes')
       .update({ content: input.content })
@@ -96,6 +134,10 @@ export class NoteRepository {
   }
 
   async delete(id: string): Promise<{ error: string | null }> {
+    // Verify note belongs to an owned patient
+    const isOwned = await this.verifyNoteOwnership(id);
+    if (!isOwned) return { error: 'Note not found or access denied' };
+
     const { error } = await this.supabase
       .from('appointment_notes')
       .delete()

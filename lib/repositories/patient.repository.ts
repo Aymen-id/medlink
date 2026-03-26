@@ -72,6 +72,7 @@ export class PatientRepository {
       .from('patients')
       .select()
       .eq('id', id)
+      .eq('owner_id', this.ownerId)
       .single();
 
     if (error) return { data: null, error: error.message };
@@ -138,6 +139,7 @@ export class PatientRepository {
       .from('patients')
       .update(row)
       .eq('id', id)
+      .eq('owner_id', this.ownerId)
       .select()
       .single();
 
@@ -149,7 +151,8 @@ export class PatientRepository {
     const { error } = await this.supabase
       .from('patients')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('owner_id', this.ownerId);
 
     return { error: error?.message ?? null };
   }

@@ -1,0 +1,17 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+System.Management.Automation.RemoteException
+Failed to compile.
+System.Management.Automation.RemoteException
+./lib/repositories/__tests__/profile.repository.test.ts
+44:7  Error: 'unpublishedProfileRow' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+System.Management.Automation.RemoteException
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

@@ -1,74 +1,153 @@
 ﻿
  RUN  v4.1.0 C:/midlink
 
- Ô£ô lib/repositories/__tests__/note.repository.test.ts (9 tests) 41ms
- Ô£ô lib/repositories/__tests__/auth.repository.test.ts (5 tests) 26ms
- Ô£ô lib/repositories/__tests__/patient.repository.test.ts (15 tests) 67ms
- Ô£ô lib/repositories/__tests__/folder.repository.test.ts (9 tests) 44ms
- Ô£ô lib/repositories/__tests__/file.repository.test.ts (19 tests) 89ms
- Ô£ô lib/schemas/__tests__/auth.schema.test.ts (5 tests) 16ms
- Ô£ô lib/schemas/__tests__/patient.schema.test.ts (3 tests) 15ms
- Ô£ô components/ui/__tests__/shared-ui.test.tsx (8 tests) 244ms
- Ô£ô components/dashboard/__tests__/Sidebar.test.tsx (6 tests) 232ms
-stderr | components/dashboard/__tests__/TopBar.test.tsx > TopBar > renders search input
-Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+ Ô£ô lib/repositories/__tests__/auth.repository.test.ts (5 tests) 12ms
+ Ô£ô lib/repositories/__tests__/folder.repository.test.ts (10 tests) 21ms
+ ÔØ» lib/repositories/__tests__/staff.repository.test.ts (7 tests | 2 failed) 22ms
+       Ô£ô should grant staff access and return mapped data 6ms
+       Ô£ô should prevent self-grant 1ms
+       Ô£ô should return error on duplicate grant 0ms
+       Ô£ô should list staff members for the owner 2ms
+       Ô£ô should update staff role and permissions with owner_id filter 1ms
+       ├ù should revoke staff access with owner_id filter 6ms
+       ├ù should revoke by staff user id with owner_id filter 2ms
+ Ô£ô lib/repositories/__tests__/note.repository.test.ts (10 tests) 21ms
+ ÔØ» lib/repositories/__tests__/patient.repository.test.ts (15 tests | 2 failed) 30ms
+       Ô£ô should insert a patient for the current owner and return mapped data 6ms
+       Ô£ô should return error on failed insert 1ms
+       Ô£ô should handle minimal input (only required fields) 2ms
+       Ô£ô should fetch a single patient by id 1ms
+       Ô£ô should return error when patient not found 1ms
+       Ô£ô should list patients for the owner with default pagination 3ms
+       Ô£ô should respect page and limit parameters 1ms
+       Ô£ô should return error on list failure 1ms
+       Ô£ô should search patients by first or last name (ilike) 2ms
+       Ô£ô should return empty array when no match 1ms
+       Ô£ô should update patient fields 1ms
+       Ô£ô should return error on update failure 1ms
+       ├ù should delete a patient by id 6ms
+       ├ù should return error on delete failure 1ms
+       Ô£ô should return total patient count for the owner 1ms
+ ÔØ» lib/repositories/__tests__/file.repository.test.ts (19 tests | 3 failed) 47ms
+       Ô£ô should upload file to storage and insert a record into patient_files 13ms
+       Ô£ô should return error when storage upload fails 1ms
+       Ô£ô should return error when DB insert fails after successful upload 1ms
+       Ô£ô should include folderId when provided 1ms
+       Ô£ô should list files for a specific patient 3ms
+       Ô£ô should filter by folderId when provided 1ms
+       Ô£ô should filter root-level files (no folder) when folderId is null 1ms
+       Ô£ô should return error on failure 1ms
+       Ô£ô should search files by name across all patient files for the owner 1ms
+       Ô£ô should return empty array for no matches 1ms
+       Ô£ô should find files matching any of the provided tags 1ms
+       ├ù should update tags for a file 7ms
+       ├ù should update folder_id for a file 2ms
+       ├ù should allow moving to root (null folder) 2ms
+       Ô£ô should delete file from storage and database record 1ms
+       Ô£ô should return error if file not found for deletion 1ms
+       Ô£ô should return a signed URL for a file 1ms
+       Ô£ô should count all files for the owner across all patients 1ms
+       Ô£ô should use fallback query when RPC is not available 1ms
 System.Management.Automation.RemoteException
-Check the render method of `DialogTrigger`.
-    at Button (C:/midlink/components/ui/button.tsx:39:19)
-    at DialogTrigger (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/trigger/DialogTrigger.js:22:5)
-    at SheetTrigger (C:/midlink/components/ui/sheet.tsx:33:28)
-    at DialogRoot (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/root/DialogRoot.js:18:5)
-    at Sheet (C:/midlink/components/ui/sheet.tsx:23:21)
-    at MobileSidebar (C:/midlink/components/dashboard/Sidebar.tsx:210:26)
-    at header
-    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
-Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 7 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
 System.Management.Automation.RemoteException
-Check the render method of `MenuTrigger`.
-    at Button (C:/midlink/components/ui/button.tsx:39:19)
-    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
-    at DropdownMenuTrigger (C:/midlink/components/ui/dropdown-menu.tsx:48:35)
-    at FloatingTree (file:///C:/midlink/node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingTree.js:83:5)
-    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
-    at DropdownMenu (C:/midlink/components/ui/dropdown-menu.tsx:28:28)
-    at header
-    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
+ FAIL  lib/repositories/__tests__/file.repository.test.ts > FileRepository > updateTags > should update tags for a file
+TypeError: Cannot read properties of undefined (reading 'id')
+ ÔØ» mapRowToFile lib/repositories/file.repository.ts:19:13
+     17| function mapRowToFile(row: FileRow): PatientFile {
+     18|   return {
+     19|     id: row.id,
+       |             ^
+     20|     patientId: row.patient_id,
+     21|     folderId: row.folder_id,
+ ÔØ» FileRepository.updateTags lib/repositories/file.repository.ts:180:20
+ ÔØ» lib/repositories/__tests__/file.repository.test.ts:245:22
 System.Management.Automation.RemoteException
-stderr | components/dashboard/__tests__/DashboardShell.test.tsx > DashboardShell > renders children content
-Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/7]ÔÄ»
 System.Management.Automation.RemoteException
-Check the render method of `DialogTrigger`.
-    at Button (C:/midlink/components/ui/button.tsx:39:19)
-    at DialogTrigger (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/trigger/DialogTrigger.js:22:5)
-    at SheetTrigger (C:/midlink/components/ui/sheet.tsx:33:28)
-    at DialogRoot (file:///C:/midlink/node_modules/@base-ui/react/esm/dialog/root/DialogRoot.js:18:5)
-    at Sheet (C:/midlink/components/ui/sheet.tsx:23:21)
-    at MobileSidebar (C:/midlink/components/dashboard/Sidebar.tsx:210:26)
-    at header
-    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
-    at div
-    at div
-    at DashboardShell (C:/midlink/components/dashboard/DashboardShell.tsx:10:27)
-Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+ FAIL  lib/repositories/__tests__/file.repository.test.ts > FileRepository > moveToFolder > should update folder_id for a file
+TypeError: Cannot read properties of undefined (reading 'id')
+ ÔØ» mapRowToFile lib/repositories/file.repository.ts:19:13
+     17| function mapRowToFile(row: FileRow): PatientFile {
+     18|   return {
+     19|     id: row.id,
+       |             ^
+     20|     patientId: row.patient_id,
+     21|     folderId: row.folder_id,
+ ÔØ» FileRepository.moveToFolder lib/repositories/file.repository.ts:200:20
+ ÔØ» lib/repositories/__tests__/file.repository.test.ts:261:22
 System.Management.Automation.RemoteException
-Check the render method of `MenuTrigger`.
-    at Button (C:/midlink/components/ui/button.tsx:39:19)
-    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
-    at DropdownMenuTrigger (C:/midlink/components/ui/dropdown-menu.tsx:48:35)
-    at FloatingTree (file:///C:/midlink/node_modules/@base-ui/react/esm/floating-ui-react/components/FloatingTree.js:83:5)
-    at FastComponent (file:///C:/midlink/node_modules/@base-ui/utils/esm/fastHooks.js:16:22)
-    at DropdownMenu (C:/midlink/components/ui/dropdown-menu.tsx:28:28)
-    at header
-    at TopBar (C:/midlink/components/dashboard/TopBar.tsx:25:19)
-    at div
-    at div
-    at DashboardShell (C:/midlink/components/dashboard/DashboardShell.tsx:10:27)
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/7]ÔÄ»
 System.Management.Automation.RemoteException
- Ô£ô components/dashboard/__tests__/TopBar.test.tsx (4 tests) 289ms
- Ô£ô components/dashboard/__tests__/DashboardShell.test.tsx (3 tests) 329ms
+ FAIL  lib/repositories/__tests__/file.repository.test.ts > FileRepository > moveToFolder > should allow moving to root (null folder)
+TypeError: Cannot read properties of undefined (reading 'id')
+ ÔØ» mapRowToFile lib/repositories/file.repository.ts:19:13
+     17| function mapRowToFile(row: FileRow): PatientFile {
+     18|   return {
+     19|     id: row.id,
+       |             ^
+     20|     patientId: row.patient_id,
+     21|     folderId: row.folder_id,
+ ÔØ» FileRepository.moveToFolder lib/repositories/file.repository.ts:200:20
+ ÔØ» lib/repositories/__tests__/file.repository.test.ts:272:22
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/7]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  lib/repositories/__tests__/patient.repository.test.ts > PatientRepository > delete > should delete a patient by id
+TypeError: this.supabase.from(...).delete(...).eq(...).eq is not a function
+ ÔØ» PatientRepository.delete lib/repositories/patient.repository.ts:155:8
+    153|       .delete()
+    154|       .eq('id', id)
+    155|       .eq('owner_id', this.ownerId);
+       |        ^
+    156|
+    157|     return { error: error?.message ?? null };
+ ÔØ» lib/repositories/__tests__/patient.repository.test.ts:266:33
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/7]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  lib/repositories/__tests__/patient.repository.test.ts > PatientRepository > delete > should return error on delete failure
+TypeError: this.supabase.from(...).delete(...).eq(...).eq is not a function
+ ÔØ» PatientRepository.delete lib/repositories/patient.repository.ts:155:8
+    153|       .delete()
+    154|       .eq('id', id)
+    155|       .eq('owner_id', this.ownerId);
+       |        ^
+    156|
+    157|     return { error: error?.message ?? null };
+ ÔØ» lib/repositories/__tests__/patient.repository.test.ts:280:33
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/7]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  lib/repositories/__tests__/staff.repository.test.ts > StaffRepository > revoke > should revoke staff access with owner_id filter
+TypeError: this.supabase.from(...).delete(...).eq(...).eq is not a function
+ ÔØ» StaffRepository.revoke lib/repositories/staff.repository.ts:130:8
+    128|       .delete()
+    129|       .eq('id', staffAccessId)
+    130|       .eq('owner_id', this.ownerId); // defense-in-depth
+       |        ^
+    131|
+    132|     return { error: error?.message ?? null };
+ ÔØ» lib/repositories/__tests__/staff.repository.test.ts:130:33
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/7]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  lib/repositories/__tests__/staff.repository.test.ts > StaffRepository > revokeByUserId > should revoke by staff user id with owner_id filter
+TypeError: this.supabase.from(...).delete(...).eq(...).eq is not a function
+ ÔØ» StaffRepository.revokeByUserId lib/repositories/staff.repository.ts:143:8
+    141|       .delete()
+    142|       .eq('staff_user_id', staffUserId)
+    143|       .eq('owner_id', this.ownerId);
+       |        ^
+    144|
+    145|     return { error: error?.message ?? null };
+ ÔØ» lib/repositories/__tests__/staff.repository.test.ts:145:33
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/7]ÔÄ»
+System.Management.Automation.RemoteException
 
- Test Files  11 passed (11)
-      Tests  86 passed (86)
-   Start at  23:46:23
-   Duration  8.01s (transform 2.19s, setup 4.48s, import 9.09s, tests 1.39s, environment 48.12s)
+ Test Files  3 failed | 3 passed (6)
+      Tests  7 failed | 59 passed (66)
+   Start at  21:51:33
+   Duration  3.21s (transform 779ms, setup 1.41s, import 786ms, tests 154ms, environment 14.70s)
 

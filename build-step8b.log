@@ -1,0 +1,24 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+System.Management.Automation.RemoteException
+./components/profile/ContactCTA.tsx:52:11
+Type error: Type '{ children: Element; asChild: true; className: string; }' is not assignable to type 'IntrinsicAttributes & ButtonProps & VariantProps<(props?: (ConfigVariants<{ variant: { default: string; outline: string; secondary: string; ghost: string; destructive: string; link: string; }; size: { ...; }; }> & ClassProp) | undefined) => string>'.
+  Property 'asChild' does not exist on type 'IntrinsicAttributes & ButtonProps & VariantProps<(props?: (ConfigVariants<{ variant: { default: string; outline: string; secondary: string; ghost: string; destructive: string; link: string; }; size: { ...; }; }> & ClassProp) | undefined) => string>'.
+System.Management.Automation.RemoteException
+[0m [90m 50 |[39m       {contactCTA [33m&&[39m contactType [33m&&[39m ([0m
+[0m [90m 51 |[39m         [33m<[39m[33mButton[39m[0m
+[0m[31m[1m>[22m[39m[90m 52 |[39m           asChild[0m
+[0m [90m    |[39m           [31m[1m^[22m[39m[0m
+[0m [90m 53 |[39m           className[33m=[39m[32m"flex-1 bg-blue-800 hover:bg-blue-700 text-white h-12 text-base"[39m[0m
+[0m [90m 54 |[39m         [33m>[39m[0m
+[0m [90m 55 |[39m           [33m<[39m[33ma[39m[0m
+Next.js build worker exited with code: 1 and signal: null

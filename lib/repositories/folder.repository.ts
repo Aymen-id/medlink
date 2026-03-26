@@ -31,9 +31,30 @@ export type ListFolderOptions = {
 };
 
 export class FolderRepository {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(
+    private readonly supabase: SupabaseClient,
+    private readonly ownerId: string,
+  ) {}
+
+  /**
+   * Verifies the target patient belongs to this.ownerId (defense-in-depth).
+   */
+  private async verifyPatientOwnership(patientId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from('patients')
+      .select('id')
+      .eq('id', patientId)
+      .eq('owner_id', this.ownerId)
+      .single();
+
+    return data !== null;
+  }
 
   async create(input: CreateFolderInput): Promise<ApiResponse<Folder>> {
+    // Verify the patient belongs to this owner
+    const isOwned = await this.verifyPatientOwnership(input.patientId);
+    if (!isOwned) return { data: null, error: 'Patient not found or access denied' };
+
     const { data, error } = await this.supabase
       .from('folders')
       .insert({
@@ -54,8 +75,9 @@ export class FolderRepository {
   ): Promise<ApiResponse<Folder[]>> {
     let query = this.supabase
       .from('folders')
-      .select()
-      .eq('patient_id', patientId);
+      .select('*, patients!inner(owner_id)')
+      .eq('patient_id', patientId)
+      .eq('patients.owner_id', this.ownerId);
 
     if (options !== undefined && 'parentId' in options) {
       if (options.parentId === null) {
@@ -73,6 +95,16 @@ export class FolderRepository {
   }
 
   async rename(id: string, name: string): Promise<ApiResponse<Folder>> {
+    // Verify folder belongs to an owned patient via join
+    const { data: existing } = await this.supabase
+      .from('folders')
+      .select('*, patients!inner(owner_id)')
+      .eq('id', id)
+      .eq('patients.owner_id', this.ownerId)
+      .single();
+
+    if (!existing) return { data: null, error: 'Folder not found or access denied' };
+
     const { data, error } = await this.supabase
       .from('folders')
       .update({ name })
@@ -85,6 +117,16 @@ export class FolderRepository {
   }
 
   async delete(id: string): Promise<{ error: string | null }> {
+    // Verify folder belongs to an owned patient via join
+    const { data: existing } = await this.supabase
+      .from('folders')
+      .select('*, patients!inner(owner_id)')
+      .eq('id', id)
+      .eq('patients.owner_id', this.ownerId)
+      .single();
+
+    if (!existing) return { error: 'Folder not found or access denied' };
+
     const { error } = await this.supabase
       .from('folders')
       .delete()

@@ -239,14 +239,21 @@ describe('FileRepository', () => {
   // -------- UPDATE TAGS --------
   describe('updateTags', () => {
     it('should update tags for a file', async () => {
+      // First call: fetchOwnedFile (ownership verification)
+      const verifyChain = createChainable();
+      verifyChain.single.mockResolvedValueOnce({ data: sampleFile, error: null });
+      // Second call: actual update
+      const updateChain = createChainable();
       const updatedFile = { ...sampleFile, tags: ['lab', 'blood', 'urgent'] };
-      mock.chainable.single.mockResolvedValueOnce({ data: updatedFile, error: null });
+      updateChain.single.mockResolvedValueOnce({ data: updatedFile, error: null });
+
+      mock.from
+        .mockReturnValueOnce(verifyChain)
+        .mockReturnValueOnce(updateChain);
 
       const result = await repo.updateTags(sampleFile.id, ['lab', 'blood', 'urgent']);
 
-      expect(mock.from).toHaveBeenCalledWith('patient_files');
-      expect(mock.chainable.update).toHaveBeenCalledWith({ tags: ['lab', 'blood', 'urgent'] });
-      expect(mock.chainable.eq).toHaveBeenCalledWith('id', sampleFile.id);
+      expect(updateChain.update).toHaveBeenCalledWith({ tags: ['lab', 'blood', 'urgent'] });
       expect(result.data?.tags).toContain('urgent');
       expect(result.error).toBeNull();
     });
@@ -255,23 +262,39 @@ describe('FileRepository', () => {
   // -------- MOVE FILE --------
   describe('moveToFolder', () => {
     it('should update folder_id for a file', async () => {
+      // First call: fetchOwnedFile
+      const verifyChain = createChainable();
+      verifyChain.single.mockResolvedValueOnce({ data: sampleFile, error: null });
+      // Second call: update
+      const updateChain = createChainable();
       const movedFile = { ...sampleFile, folder_id: FOLDER_ID };
-      mock.chainable.single.mockResolvedValueOnce({ data: movedFile, error: null });
+      updateChain.single.mockResolvedValueOnce({ data: movedFile, error: null });
+
+      mock.from
+        .mockReturnValueOnce(verifyChain)
+        .mockReturnValueOnce(updateChain);
 
       const result = await repo.moveToFolder(sampleFile.id, FOLDER_ID);
 
-      expect(mock.chainable.update).toHaveBeenCalledWith({ folder_id: FOLDER_ID });
+      expect(updateChain.update).toHaveBeenCalledWith({ folder_id: FOLDER_ID });
       expect(result.data?.folderId).toBe(FOLDER_ID);
       expect(result.error).toBeNull();
     });
 
     it('should allow moving to root (null folder)', async () => {
+      const verifyChain = createChainable();
+      verifyChain.single.mockResolvedValueOnce({ data: sampleFile, error: null });
+      const updateChain = createChainable();
       const movedFile = { ...sampleFile, folder_id: null };
-      mock.chainable.single.mockResolvedValueOnce({ data: movedFile, error: null });
+      updateChain.single.mockResolvedValueOnce({ data: movedFile, error: null });
+
+      mock.from
+        .mockReturnValueOnce(verifyChain)
+        .mockReturnValueOnce(updateChain);
 
       const result = await repo.moveToFolder(sampleFile.id, null);
 
-      expect(mock.chainable.update).toHaveBeenCalledWith({ folder_id: null });
+      expect(updateChain.update).toHaveBeenCalledWith({ folder_id: null });
       expect(result.data?.folderId).toBeNull();
     });
   });

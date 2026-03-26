@@ -77,7 +77,7 @@ export async function getFolders(patientId: string, parentId: string | null = nu
   if (!context) return { data: [], error: 'Unauthorized' };
 
   const supabase = createClient();
-  const repo = new FolderRepository(supabase);
+  const repo = new FolderRepository(supabase, context.ownerId);
   return repo.listByPatient(patientId, { parentId });
 }
 
@@ -90,7 +90,7 @@ export async function createFolder(input: CreateFolderInput) {
   }
 
   const supabase = createClient();
-  const repo = new FolderRepository(supabase);
+  const repo = new FolderRepository(supabase, context.ownerId);
   const result = await repo.create(input);
 
   if (!result.error) {
@@ -108,7 +108,7 @@ export async function deleteFolder(folderId: string, patientId: string) {
   }
 
   const supabase = createClient();
-  const repo = new FolderRepository(supabase);
+  const repo = new FolderRepository(supabase, context.ownerId);
   const result = await repo.delete(folderId);
 
   if (!result.error) {
@@ -128,7 +128,7 @@ export async function addNote(input: CreateNoteInput) {
   }
 
   const supabase = createClient();
-  const repo = new NoteRepository(supabase, context.userId); // note author is the user
+  const repo = new NoteRepository(supabase, context.userId, context.ownerId); // author + owner
   const result = await repo.create(input);
 
   if (!result.error) {
@@ -146,7 +146,7 @@ export async function deleteNote(noteId: string, patientId: string) {
   }
 
   const supabase = createClient();
-  const repo = new NoteRepository(supabase, context.userId);
+  const repo = new NoteRepository(supabase, context.userId, context.ownerId);
   const result = await repo.delete(noteId);
 
   if (!result.error) {

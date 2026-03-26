@@ -41,7 +41,7 @@ export default async function PatientDetailPage({ params, searchParams }: Props)
   ]);
 
   // Fetch appointment notes
-  const noteRepo = new NoteRepository(supabase, context.userId);
+  const noteRepo = new NoteRepository(supabase, context.userId, context.ownerId);
   const { data: notes } = await noteRepo.listByPatient(patient.id, { limit: 100 });
 
   return (

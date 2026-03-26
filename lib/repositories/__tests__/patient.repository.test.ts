@@ -133,6 +133,7 @@ describe('PatientRepository', () => {
       expect(mock.from).toHaveBeenCalledWith('patients');
       expect(mock.chainable.select).toHaveBeenCalled();
       expect(mock.chainable.eq).toHaveBeenCalledWith('id', samplePatient.id);
+      expect(mock.chainable.eq).toHaveBeenCalledWith('owner_id', OWNER_ID);
       expect(result.data?.firstName).toBe('Jane');
       expect(result.error).toBeNull();
     });
@@ -239,6 +240,7 @@ describe('PatientRepository', () => {
         expect.objectContaining({ first_name: 'Janet' }),
       );
       expect(mock.chainable.eq).toHaveBeenCalledWith('id', samplePatient.id);
+      expect(mock.chainable.eq).toHaveBeenCalledWith('owner_id', OWNER_ID);
       expect(result.data?.firstName).toBe('Janet');
       expect(result.error).toBeNull();
     });
@@ -258,21 +260,28 @@ describe('PatientRepository', () => {
 
   // -------- DELETE --------
   describe('delete', () => {
-    it('should delete a patient by id', async () => {
-      mock.chainable.eq.mockResolvedValueOnce({ error: null });
+    it('should delete a patient by id with ownership filter', async () => {
+      // The delete chain: .delete().eq('id', ...).eq('owner_id', ...)
+      // The second .eq() needs to resolve
+      mock.chainable.eq
+        .mockReturnValueOnce(mock.chainable) // first eq returns chainable
+        .mockResolvedValueOnce({ error: null }); // second eq resolves
 
       const result = await repo.delete(samplePatient.id);
 
       expect(mock.from).toHaveBeenCalledWith('patients');
       expect(mock.chainable.delete).toHaveBeenCalled();
       expect(mock.chainable.eq).toHaveBeenCalledWith('id', samplePatient.id);
+      expect(mock.chainable.eq).toHaveBeenCalledWith('owner_id', OWNER_ID);
       expect(result.error).toBeNull();
     });
 
     it('should return error on delete failure', async () => {
-      mock.chainable.eq.mockResolvedValueOnce({
-        error: { message: 'Delete failed' },
-      });
+      mock.chainable.eq
+        .mockReturnValueOnce(mock.chainable)
+        .mockResolvedValueOnce({
+          error: { message: 'Delete failed' },
+        });
 
       const result = await repo.delete('bad-id');
 

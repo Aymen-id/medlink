@@ -1,0 +1,29 @@
+﻿
+> medilink@0.1.0 build
+> next build
+
+  Ôû▓ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+Error: STRIPE_SECRET_KEY environment variable is not set
+    at 89403 (C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:5168)
+    at t (C:\midlink\.next\server\webpack-runtime.js:1:127)
+    at 58945 (C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:692)
+    at t (C:\midlink\.next\server\webpack-runtime.js:1:127)
+    at r (C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:5385)
+    at C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:5424
+    at t.X (C:\midlink\.next\server\webpack-runtime.js:1:1191)
+    at C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:5398
+    at Object.<anonymous> (C:\midlink\.next\server\app\api\webhooks\stripe\route.js:1:5452)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+System.Management.Automation.RemoteException
+> Build error occurred
+Error: Failed to collect page data for /api/webhooks/stripe
+    at C:\midlink\node_modules\next\dist\build\utils.js:1269:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  type: 'Error'
+}

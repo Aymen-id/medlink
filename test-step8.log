@@ -1,0 +1,16 @@
+﻿
+ RUN  v4.1.0 C:/midlink
+
+ Ô£ô lib/repositories/__tests__/note.repository.test.ts (10 tests) 21ms
+ Ô£ô lib/repositories/__tests__/patient.repository.test.ts (15 tests) 31ms
+ Ô£ô lib/repositories/__tests__/folder.repository.test.ts (10 tests) 20ms
+ Ô£ô lib/repositories/__tests__/auth.repository.test.ts (5 tests) 11ms
+ Ô£ô lib/repositories/__tests__/staff.repository.test.ts (7 tests) 15ms
+ Ô£ô lib/repositories/__tests__/profile.repository.test.ts (11 tests) 23ms
+ Ô£ô lib/repositories/__tests__/file.repository.test.ts (19 tests) 47ms
+
+ Test Files  7 passed (7)
+      Tests  77 passed (77)
+   Start at  23:55:12
+   Duration  2.72s (transform 766ms, setup 1.20s, import 917ms, tests 169ms, environment 14.04s)
+
