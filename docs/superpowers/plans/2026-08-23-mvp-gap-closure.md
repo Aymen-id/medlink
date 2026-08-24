@@ -911,7 +911,7 @@ Build the owner-facing team screen consuming Task 5's API, and replace the place
 - Consumes: Task 5 REST surface (`GET/POST /api/staff`, `PATCH/DELETE /api/staff/:id`); `StaffAccess = { id, ownerId, staffUserId, role, permissions, grantedAt }` (`lib/types` via `mapRowToStaffAccess`).
 - Produces: `TeamManager({ initialStaff }: { initialStaff: StaffAccess[] })` client component; route `/settings/team` reachable from `/settings`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `components/dashboard/__tests__/TeamManager.test.tsx`:
 
@@ -1003,12 +1003,12 @@ describe('TeamManager', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run TeamManager`
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `components/dashboard/TeamManager.tsx`**
+- [x] **Step 3: Implement `components/dashboard/TeamManager.tsx`**
 
 Uses plain native `<select>` elements styled with Tailwind (the project's shadcn wrappers sit on `@base-ui/react` with a non-standard API; native selects keep this file compile-safe and match the calm aesthetic — swapping to styled primitives later is cosmetic).
 
@@ -1166,12 +1166,12 @@ export function TeamManager({ initialStaff }: TeamManagerProps) {
 }
 ```
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run TeamManager && npx tsc --noEmit`
 Expected: PASS 4/4, 0 type errors. (If the `Button`/`buttonVariants` import path differs from `components/ui/button`, match what other dashboard components import.)
 
-- [ ] **Step 5: Create the team page**
+- [x] **Step 5: Create the team page**
 
 Create `app/(dashboard)/settings/team/page.tsx`:
 
@@ -1208,7 +1208,7 @@ export default async function TeamPage() {
 }
 ```
 
-- [ ] **Step 6: Replace the settings hub stub**
+- [x] **Step 6: Replace the settings hub stub**
 
 Overwrite `app/(dashboard)/settings/page.tsx` entirely:
 
@@ -1258,7 +1258,7 @@ export default function SettingsPage() {
 }
 ```
 
-- [ ] **Step 7: Full verification and commit**
+- [x] **Step 7: Full verification and commit**
 
 Run: `npx vitest run && npx tsc --noEmit && npm run build`
 Expected: green.
@@ -1289,7 +1289,7 @@ Turn the decorative TopBar input into working search across patient names and do
   - `EmptyState` — `components/ui/EmptyState.tsx` (check its prop names before use and match them in SearchResults)
 - Produces: route `/search?q=<term>` rendering grouped patient/file results; `SearchResults({ query, patients, files })` presentational component.
 
-- [ ] **Step 1: Write the failing SearchResults test**
+- [x] **Step 1: Write the failing SearchResults test**
 
 Create `components/dashboard/__tests__/SearchResults.test.tsx`:
 
@@ -1329,12 +1329,12 @@ describe('SearchResults', () => {
 
 Adjust the fixture casts to the real `Patient` / `PatientFile` fields from `types/index.ts` — read those types first and populate whatever fields the component renders (the casts above intentionally silence extra-field mismatches in fixtures).
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `npx vitest run SearchResults`
 Expected: FAIL — module does not exist.
 
-- [ ] **Step 3: Implement `components/dashboard/SearchResults.tsx`**
+- [x] **Step 3: Implement `components/dashboard/SearchResults.tsx`**
 
 ```tsx
 import Link from 'next/link';
@@ -1406,12 +1406,12 @@ export function SearchResults({ query, patients, files }: SearchResultsProps) {
 
 Open `types/index.ts` and align field names (`firstName`/`lastName`, `fileName`, `patientId`) with the actual `Patient` / `PatientFile` definitions before running; also open `components/ui/EmptyState.tsx` and match its real props (it takes `icon`, `title`, `description` per Phase-1 notes — adjust if it differs).
 
-- [ ] **Step 4: Run to verify pass**
+- [x] **Step 4: Run to verify pass**
 
 Run: `npx vitest run SearchResults`
 Expected: PASS 2/2 (after fixture/type alignment).
 
-- [ ] **Step 5: Add the TopBar navigation test**
+- [x] **Step 5: Add the TopBar navigation test**
 
 The file already mocks routing with a captured spy and defines this fixture at top level:
 
@@ -1446,7 +1446,7 @@ it("navigates to /search with the query on submit", () => {
 
 (The assertion targets `mockPush` because that is the exact spy the file's `vi.mock("next/navigation")` factory closes over.)
 
-- [ ] **Step 6: Make the TopBar form functional**
+- [x] **Step 6: Make the TopBar form functional**
 
 In `components/dashboard/TopBar.tsx`, wrap the existing search input's `<div>` in a form and handle submit (router is already imported — it powers logout):
 
@@ -1468,12 +1468,12 @@ In `components/dashboard/TopBar.tsx`, wrap the existing search input's `<div>` i
 
 Keep the existing search-icon `<div>` overlay positioning intact; only add `name="q"` to the input and the wrapping `<form>`.
 
-- [ ] **Step 7: Run TopBar tests**
+- [x] **Step 7: Run TopBar tests**
 
 Run: `npx vitest run TopBar`
 Expected: PASS — previous tests plus the new navigation test.
 
-- [ ] **Step 8: Create the search page**
+- [x] **Step 8: Create the search page**
 
 Create `app/(dashboard)/search/page.tsx`:
 
@@ -1537,7 +1537,7 @@ export default async function SearchPage({
 
 Note: `file.repository.search()` scopes by `owner_id` like the patient variant — confirm while implementing (read `lib/repositories/file.repository.ts:132-145`); if it is not owner-scoped, stop and fix the repository first with a test asserting scoping.
 
-- [ ] **Step 9: Full verification and commit**
+- [x] **Step 9: Full verification and commit**
 
 Run: `npx vitest run && npx tsc --noEmit && npm run lint && npm run build`
 Expected: all green — this is the phase-close quality gate.
