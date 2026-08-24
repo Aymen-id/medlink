@@ -6,6 +6,9 @@ import { getUserContext } from '@/lib/supabase/context';
 import { FileRepository } from '@/lib/repositories/file.repository';
 import { FolderRepository } from '@/lib/repositories/folder.repository';
 import { NoteRepository } from '@/lib/repositories/note.repository';
+import { SubscriptionRepository } from '@/lib/repositories/subscription.repository';
+import { TierService } from '@/lib/services/tier.service';
+import { FREE_TIER_FILE_LIMIT } from '@/lib/constants';
 import type { CreateNoteInput } from '@/lib/schemas/note.schema';
 import type { CreateFolderInput } from '@/lib/repositories/folder.repository';
 
@@ -62,6 +65,18 @@ export async function uploadFileAction(patientId: string, folderId: string | nul
 
   const supabase = createClient();
   const repo = new FileRepository(supabase, context.ownerId);
+
+  // Tier gate: Free plan is capped at FREE_TIER_FILE_LIMIT files per owner.
+  const subscriptionRepo = new SubscriptionRepository(supabase, context.userId);
+  const tier = await subscriptionRepo.getTier();
+  const countResult = await repo.countByOwner();
+  const currentCount = countResult.data ?? 0;
+  if (!TierService.canUploadFile(tier, currentCount)) {
+    return {
+      data: null,
+      error: `File limit reached (${currentCount}/${FREE_TIER_FILE_LIMIT} on Free). Upgrade to Pro for unlimited storage.`,
+    };
+  }
 
   const result = await repo.upload({ patientId, folderId, file, tags });
 
