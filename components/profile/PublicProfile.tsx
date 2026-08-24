@@ -70,6 +70,7 @@ export function PublicProfile({ profile }: PublicProfileProps) {
         <ContactCTA
           contactCTA={profile.contactCTA}
           bookingCTA={profile.bookingCTA}
+          profileId={profile.id}
         />
 
         {/* Bio */}
