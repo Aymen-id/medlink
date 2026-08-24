@@ -48,15 +48,25 @@ export function TopBar({ user }: TopBarProps) {
       <MobileSidebar user={user} />
 
       {/* Search */}
-      <div className="relative flex-1 max-w-md">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const q = new FormData(e.currentTarget).get("q")
+          if (typeof q === "string" && q.trim()) {
+            router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+          }
+        }}
+        className="relative flex-1 max-w-md"
+      >
         <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
+          name="q"
           placeholder="Search patients, files..."
           className="pl-9 h-8 bg-muted/50 border-0 focus-visible:ring-1"
           aria-label="Search patients and files"
         />
-      </div>
+      </form>
 
       {/* Spacer */}
       <div className="flex-1" />

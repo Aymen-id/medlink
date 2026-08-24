@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 
 // Mock next/navigation
 const mockPush = vi.fn()
@@ -58,5 +58,25 @@ describe("TopBar", () => {
     render(<TopBar user={mockUser} />)
     // "Dr. Ali Hassan" -> "D", "A" => "DA"
     expect(screen.getByText("DA")).toBeDefined()
+  })
+
+  it("navigates to /search with the query on submit", () => {
+    render(<TopBar user={mockUser} />)
+
+    const searchInput = screen.getByLabelText("Search patients and files")
+    fireEvent.change(searchInput, { target: { value: "bloodwork" } })
+    fireEvent.submit(searchInput.closest("form")!)
+
+    expect(mockPush).toHaveBeenCalledWith("/search?q=bloodwork")
+  })
+
+  it("does not navigate on an empty or whitespace-only query", () => {
+    render(<TopBar user={mockUser} />)
+
+    const searchInput = screen.getByLabelText("Search patients and files")
+    fireEvent.change(searchInput, { target: { value: "   " } })
+    fireEvent.submit(searchInput.closest("form")!)
+
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })
