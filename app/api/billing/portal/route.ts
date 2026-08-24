@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserContext } from '@/lib/supabase/context';
 import { createClient } from '@/lib/supabase/server';
 import { SubscriptionRepository } from '@/lib/repositories/subscription.repository';
 import { createPortalSession } from '@/lib/stripe/checkout';
+import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
 
 /**
  * POST /api/billing/portal — create a Stripe Billing Portal session.
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const rl = rateLimit(`portal:${getClientIp(request)}`, 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+    );
+  }
+
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

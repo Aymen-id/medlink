@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { AnalyticsRepository, hashIp } from '@/lib/repositories/analytics.repository';
+import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
 import { z } from 'zod';
 
 const trackSchema = z.object({
@@ -13,9 +14,17 @@ const trackSchema = z.object({
 /**
  * POST /api/analytics/track
  * Public endpoint — records profile views and link clicks.
- * Rate limiting should be handled at the edge (Vercel, Cloudflare).
+ * IP-keyed in-app limit; edge-level limiting can complement it.
  */
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(`track:${getClientIp(request)}`, 30, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

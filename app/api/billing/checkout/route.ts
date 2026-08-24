@@ -3,6 +3,7 @@ import { getUserContext } from '@/lib/supabase/context';
 import { createClient } from '@/lib/supabase/server';
 import { SubscriptionRepository } from '@/lib/repositories/subscription.repository';
 import { createCheckoutSession } from '@/lib/stripe/checkout';
+import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
 import { z } from 'zod';
 
 const checkoutSchema = z.object({
@@ -14,6 +15,14 @@ const checkoutSchema = z.object({
  * POST /api/billing/checkout — create a Stripe Checkout session.
  */
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(`checkout:${getClientIp(request)}`, 10, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+    );
+  }
+
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

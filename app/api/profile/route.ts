@@ -3,11 +3,20 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserContext } from '@/lib/supabase/context';
 import { ProfileRepository } from '@/lib/repositories/profile.repository';
 import { updateProfileSchema } from '@/lib/schemas/profile.schema';
+import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
 
 /**
  * GET /api/profile — returns the authenticated owner's profile.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rl = rateLimit(`profile:${getClientIp(request)}`, 20, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+    );
+  }
+
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -27,6 +36,14 @@ export async function GET() {
  * PUT /api/profile — updates the authenticated owner's profile.
  */
 export async function PUT(request: NextRequest) {
+  const rl = rateLimit(`profile:${getClientIp(request)}`, 20, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
+    );
+  }
+
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
