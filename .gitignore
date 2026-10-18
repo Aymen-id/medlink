@@ -27,6 +27,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env.test
 
 # vercel
 .vercel
@@ -37,3 +38,17 @@ next-env.d.ts
 
 # local verification output
 *.log
+
+# superdesign temporary files
+.superdesign/tmp/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.auth/
+
+# local task scratch
+/.tmp/
+/supabase/.temp/

@@ -1,85 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { AnalyticsRepository, hashIp } from '@/lib/repositories/analytics.repository';
-import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
+import { NextRequest,NextResponse } from 'next/server';
 import { z } from 'zod';
-
-const trackSchema = z.object({
-  profileId: z.string().uuid('Invalid profile ID'),
-  type: z.enum(['view', 'click']),
-  linkType: z.string().max(50).optional(),
-  referralSource: z.string().max(500).optional(),
-});
-
-/**
- * POST /api/analytics/track
- * Public endpoint — records profile views and link clicks.
- * IP-keyed in-app limit; edge-level limiting can complement it.
- */
-export async function POST(request: NextRequest) {
-  const rl = rateLimit(`track:${getClientIp(request)}`, 30, 60_000);
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } },
-    );
-  }
-
-  const body = await request.json().catch(() => null);
-  if (!body) {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const parsed = trackSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0].message },
-      { status: 400 },
-    );
-  }
-
-  const { profileId, type, linkType, referralSource } = parsed.data;
-
-  const supabase = createClient();
-  const repo = new AnalyticsRepository(supabase, profileId);
-
-  if (type === 'view') {
-    // Hash IP for unique visitor counting — never store raw IP
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown';
-    const ipHash = await hashIp(ip);
-
-    const userAgent = request.headers.get('user-agent') ?? null;
-
-    const result = await repo.recordView({
-      referralSource: referralSource ?? null,
-      userAgent,
-      ipHash,
-    });
-
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true }, { status: 201 });
-  }
-
-  if (type === 'click') {
-    if (!linkType) {
-      return NextResponse.json(
-        { error: 'linkType is required for click events' },
-        { status: 400 },
-      );
-    }
-
-    const result = await repo.recordClick(linkType);
-
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true }, { status: 201 });
-  }
-
-  return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
+import { trackProfileEvent } from '@/lib/analytics/track';
+const schema=z.discriminatedUnion('type',[
+  z.object({ profileId:z.uuid(),type:z.literal('view'),referralSource:z.string().max(500).optional() }),
+  z.object({ profileId:z.uuid(),type:z.literal('click'),linkType:z.enum(['phone','email','whatsapp','website','contact','booking','link']),referralSource:z.string().max(500).optional() }),
+]);
+export async function POST(request:NextRequest) {
+  const parsed=schema.safeParse(await request.json().catch(()=>null));
+  if(!parsed.success) return NextResponse.json({ error:'Invalid analytics event' },{ status:400 });
+  try {
+    const result=await trackProfileEvent(parsed.data.profileId,parsed.data,request.headers);
+    if(result==='rate_limited') return NextResponse.json({ error:'Too many requests' },{ status:429,headers:{ 'Retry-After':'60' } });
+    if(result==='unavailable') return NextResponse.json({ error:'Profile not available' },{ status:404 });
+    return NextResponse.json({ success:true },{ status:201 });
+  } catch { return NextResponse.json({ error:'Analytics temporarily unavailable' },{ status:503 }); }
 }

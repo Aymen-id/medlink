@@ -12,7 +12,7 @@ export default async function ProfileSettingsPage() {
   const context = await getUserContext();
   if (!context) redirect('/login');
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, context.ownerId);
 
   const { data: profile } = await repo.findByUserId();

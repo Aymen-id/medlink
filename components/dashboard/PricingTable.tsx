@@ -12,6 +12,7 @@ type PricingTableProps = {
   currentTier: SubscriptionTier;
   onSelectTier: (tier: Exclude<SubscriptionTier, 'free'>, interval: 'monthly' | 'annual') => void;
   loading?: boolean;
+  currentInterval?:'monthly' | 'annual';
 };
 
 const FEATURES = [
@@ -21,13 +22,13 @@ const FEATURES = [
   { name: 'Public profile', free: true, pro: true, clinic: true },
   { name: 'Profile analytics', free: false, pro: true, clinic: true },
   { name: 'Appointment notes', free: false, pro: true, clinic: true },
-  { name: 'ZIP export', free: false, pro: true, clinic: true },
-  { name: 'Team members', free: false, pro: false, clinic: 'Up to 8' },
+  { name: 'ZIP export (up to 100 MiB)', free: true, pro: true, clinic: true },
+  { name: 'Physician workspaces', free: '1', pro: '1', clinic: 'Up to 8' },
   { name: 'Priority support', free: false, pro: false, clinic: true },
 ];
 
-export function PricingTable({ currentTier, onSelectTier, loading }: PricingTableProps) {
-  const [interval, setInterval] = useState<'monthly' | 'annual'>('monthly');
+export function PricingTable({ currentTier, onSelectTier, loading,currentInterval='monthly' }: PricingTableProps) {
+  const [interval, setInterval] = useState<'monthly' | 'annual'>(currentInterval);
 
   return (
     <div className="space-y-6">
@@ -105,7 +106,7 @@ export function PricingTable({ currentTier, onSelectTier, loading }: PricingTabl
             </div>
           </CardHeader>
           <CardContent>
-            {currentTier === 'pro' ? (
+            {currentTier === 'pro' && currentInterval===interval ? (
               <Badge className="w-full justify-center py-2 bg-blue-50 text-blue-800">
                 Current Plan
               </Badge>
@@ -115,7 +116,7 @@ export function PricingTable({ currentTier, onSelectTier, loading }: PricingTabl
                 disabled={loading}
                 className="w-full bg-blue-800 hover:bg-blue-700"
               >
-                {currentTier === 'free' ? 'Upgrade to Pro' : 'Switch to Pro'}
+                {currentTier === 'pro' ? 'Change Pro billing':currentTier === 'free' ? 'Upgrade to Pro' : 'Switch to Pro'}
               </Button>
             )}
             <ul className="mt-4 space-y-2">
@@ -144,7 +145,7 @@ export function PricingTable({ currentTier, onSelectTier, loading }: PricingTabl
             </div>
           </CardHeader>
           <CardContent>
-            {currentTier === 'clinic' ? (
+            {currentTier === 'clinic' && currentInterval===interval ? (
               <Badge className="w-full justify-center py-2 bg-blue-50 text-blue-800">
                 Current Plan
               </Badge>
@@ -154,7 +155,7 @@ export function PricingTable({ currentTier, onSelectTier, loading }: PricingTabl
                 disabled={loading}
                 className="w-full bg-blue-800 hover:bg-blue-700"
               >
-                {currentTier === 'free' ? 'Upgrade to Clinic' : 'Switch to Clinic'}
+                {currentTier === 'clinic' ? 'Change Clinic billing':currentTier === 'free' ? 'Upgrade to Clinic' : 'Switch to Clinic'}
               </Button>
             )}
             <ul className="mt-4 space-y-2">

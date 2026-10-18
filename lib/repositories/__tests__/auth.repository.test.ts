@@ -22,6 +22,7 @@ describe('AuthRepository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://clinic.example');
     supabase = createMockSupabase();
     repo = new AuthRepository(supabase);
   });
@@ -39,7 +40,7 @@ describe('AuthRepository', () => {
       expect(supabase.auth.signUp).toHaveBeenCalledWith({
         email: 'doc@clinic.com',
         password: 'Secure123!',
-        options: { data: { display_name: 'Dr. Smith' } },
+        options: { data: { display_name: 'Dr. Smith' }, emailRedirectTo: 'https://clinic.example/auth/callback' },
       });
       expect(result.data).toEqual(mockData);
       expect(result.error).toBeNull();
@@ -120,7 +121,7 @@ describe('AuthRepository', () => {
 
       expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
         'doc@clinic.com',
-        expect.objectContaining({ redirectTo: expect.stringContaining('/reset-password/update') }),
+        { redirectTo: 'https://clinic.example/auth/callback?next=%2Freset-password%2Fupdate' },
       );
       expect(result.data).toEqual({});
       expect(result.error).toBeNull();

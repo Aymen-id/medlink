@@ -7,8 +7,8 @@ export const FREE_TIER_FILE_LIMIT = 10;
 
 export const TIER_PRICING = {
   free: { monthly: 0, annual: 0 },
-  pro: { monthly: 29, annual: Math.round(29 * 12 * 0.8) }, // 20% discount
-  clinic: { monthly: 99, annual: Math.round(99 * 12 * 0.8) },
+  pro: { monthly: 29, annual: 278.4 }, // USD, exactly 20% off twelve months
+  clinic: { monthly: 99, annual: 950.4 },
 };
 
 export const MAX_FILE_SIZE_MB = 50;

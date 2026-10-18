@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserContext } from '@/lib/supabase/context';
 import { AnalyticsRepository } from '@/lib/repositories/analytics.repository';
 import { SUBSCRIPTION_FEATURES } from '@/lib/constants';
-import { SubscriptionRepository } from '@/lib/repositories/subscription.repository';
+import { getWorkspaceTier } from '@/lib/supabase/entitlements';
 
 /**
  * GET /api/analytics/stats
@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Tier check: analytics is a Pro/Clinic feature
-  const supabase = createClient();
-  const subRepo = new SubscriptionRepository(supabase, context.ownerId);
-  const { data: subscription } = await subRepo.findByUserId();
-  const tier = subscription?.tier ?? 'free';
+  const supabase = await createClient();
+  const entitlement=await getWorkspaceTier(supabase,context.workspaceId);
+  if(entitlement.error || !entitlement.data) return NextResponse.json({ error:'Could not verify analytics access' },{ status:503 });
+  const tier=entitlement.data;
 
   if (!SUBSCRIPTION_FEATURES[tier].analytics) {
     return NextResponse.json(
@@ -34,24 +34,16 @@ export async function GET(request: NextRequest) {
 
   const repo = new AnalyticsRepository(supabase, context.ownerId);
 
-  const [summary, daily, referrers] = await Promise.all([
-    repo.getSummary(days),
-    repo.getDailyMetrics(days),
-    repo.getTopReferrers(10, days),
-  ]);
+  const metrics=await repo.getDashboard(days);
 
-  if (summary.error || daily.error || referrers.error) {
+  if (metrics.error) {
     return NextResponse.json(
-      { error: summary.error ?? daily.error ?? referrers.error },
+      { error: metrics.error },
       { status: 500 },
     );
   }
 
   return NextResponse.json({
-    data: {
-      summary: summary.data,
-      daily: daily.data,
-      referrers: referrers.data,
-    },
+    data: metrics.data,
   });
 }

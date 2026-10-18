@@ -17,6 +17,7 @@ export default function SignupPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [confirmationPending, setConfirmationPending] = useState(false)
   const supabase = createClient()
   const authRepo = new AuthRepository(supabase)
 
@@ -33,11 +34,14 @@ export default function SignupPage() {
     setError(null)
     
     try {
-      const { error: signUpError } = await authRepo.signUp(data)
+      const { data: authData, error: signUpError } = await authRepo.signUp(data)
       
       if (signUpError) throw new Error(signUpError)
       
-      // Send them to login or directly log them in (Supabase emails verification typically, but depends on config)
+      if (!authData?.session) {
+        setConfirmationPending(true)
+        return
+      }
       router.push("/patients")
       router.refresh()
     } catch (err: unknown) {
@@ -47,6 +51,14 @@ export default function SignupPage() {
     }
   }
 
+  if (confirmationPending) return (
+    <div role="status" className="flex flex-col gap-4 text-center">
+      <h1 className="text-2xl font-semibold">Check your email</h1>
+      <p>Follow the confirmation link to activate your account, then sign in to your workspace.</p>
+      <Link href="/login" className="text-primary underline">Back to Sign In</Link>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -54,7 +66,7 @@ export default function SignupPage() {
         <p className="text-sm text-gray-500 mt-2">Start organizing your practice</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
             {error}

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- standalone CommonJS verification runner */
 const { execSync } = require('child_process');
 const fs = require('fs');
 
 const commands = [
   { name: 'BUILD', cmd: 'npx next build' },
   { name: 'TYPECHECK', cmd: 'npx tsc --noEmit' },
-  { name: 'LINT', cmd: 'npx next lint' },
+  { name: 'LINT', cmd: 'npm run lint' },
 ];
 
 let output = '';

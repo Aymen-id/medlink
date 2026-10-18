@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createFolderSchema = z.object({
-  name: z.string()
+  name: z.string().trim()
     .min(1, "Folder name is required")
     .max(100, "Folder name must be 100 characters or less")
     .regex(/^[a-zA-Z0-9\s\-_().]+$/, "Folder name contains invalid characters"),
@@ -10,7 +10,7 @@ export const createFolderSchema = z.object({
 });
 
 export const renameFolderSchema = z.object({
-  name: z.string()
+  name: z.string().trim()
     .min(1, "Folder name is required")
     .max(100, "Folder name must be 100 characters or less")
     .regex(/^[a-zA-Z0-9\s\-_().]+$/, "Folder name contains invalid characters"),

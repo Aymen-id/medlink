@@ -53,7 +53,7 @@ export class NoteRepository {
       .eq('patients.owner_id', this.ownerId)
       .single();
 
-    return data !== null;
+    return data !== null && data.author_id===this.authorId;
   }
 
   async create(input: CreateNoteInput): Promise<ApiResponse<AppointmentNote>> {

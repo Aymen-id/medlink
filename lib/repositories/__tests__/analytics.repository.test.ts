@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AnalyticsRepository, hashIp } from '../analytics.repository';
 import type { SupabaseClient } from '@supabase/supabase-js';
+vi.mock('server-only', () => ({}));
 
 // ---------- chainable mock builder ----------
 function createMockSupabase() {
   const chainable: Record<string, ReturnType<typeof vi.fn>> = {};
-  const methods = ['select', 'insert', 'eq', 'gte', 'order', 'single', 'not'];
+  const methods = ['select', 'insert', 'eq', 'gte', 'order', 'single', 'is'];
   for (const m of methods) {
     chainable[m] = vi.fn().mockImplementation(() => chainable);
   }
@@ -141,9 +142,9 @@ describe('AnalyticsRepository', () => {
 
       const result = await repo.getSummary(30);
 
-      expect(result.data?.totalViews).toBe(4);
+      expect(result.data?.totalViews).toBe(2);
       expect(result.data?.totalClicks).toBe(2);
-      expect(result.data?.ctr).toBe(50);
+      expect(result.data?.ctr).toBe(100);
     });
 
     it('should return 0 CTR when no views', async () => {
@@ -184,7 +185,7 @@ describe('AnalyticsRepository', () => {
       expect(result.data).toBeDefined();
 
       const todayMetric = result.data?.find((d) => d.date === today);
-      expect(todayMetric?.views).toBe(3);
+      expect(todayMetric?.views).toBe(2);
       expect(todayMetric?.clicks).toBe(1);
     });
 
@@ -219,8 +220,9 @@ describe('AnalyticsRepository', () => {
         { referral_source: 'https://google.com/search?q=test' },
         { referral_source: 'https://google.com/search?q=doctor' },
         { referral_source: 'https://twitter.com/drsmith' },
+        { referral_source:null },
       ];
-      mock.chain.not.mockResolvedValueOnce({ data: rows, error: null });
+      mock.chain.is.mockResolvedValueOnce({ data: rows, error: null });
 
       const result = await repo.getTopReferrers(10, 30);
 
@@ -229,6 +231,7 @@ describe('AnalyticsRepository', () => {
       expect(google?.count).toBe(2);
       const twitter = result.data?.find((s) => s.source === 'twitter.com');
       expect(twitter?.count).toBe(1);
+      expect(result.data?.find(source=>source.source==='Direct')?.count).toBe(1);
     });
 
     it('should handle non-URL referral sources gracefully', async () => {
@@ -236,7 +239,7 @@ describe('AnalyticsRepository', () => {
         { referral_source: 'direct-link' },
         { referral_source: 'qr-code' },
       ];
-      mock.chain.not.mockResolvedValueOnce({ data: rows, error: null });
+      mock.chain.is.mockResolvedValueOnce({ data: rows, error: null });
 
       const result = await repo.getTopReferrers(10, 30);
 
@@ -248,7 +251,7 @@ describe('AnalyticsRepository', () => {
       const rows = Array.from({ length: 15 }, (_, i) => ({
         referral_source: `https://site${i % 3}.com`,
       }));
-      mock.chain.not.mockResolvedValueOnce({ data: rows, error: null });
+      mock.chain.is.mockResolvedValueOnce({ data: rows, error: null });
 
       const result = await repo.getTopReferrers(2, 30);
 
@@ -259,7 +262,7 @@ describe('AnalyticsRepository', () => {
     });
 
     it('should return error on query failure', async () => {
-      mock.chain.not.mockResolvedValueOnce({
+      mock.chain.is.mockResolvedValueOnce({
         data: null,
         error: { message: 'Denied' },
       });
@@ -273,6 +276,7 @@ describe('AnalyticsRepository', () => {
 
 // ---- hashIp utility ----
 describe('hashIp', () => {
+  beforeEach(() => vi.stubEnv('IP_HASH_SALT', 'synthetic-test-salt-at-least-32-characters'));
   it('should return a 64-char hex string', async () => {
     const hash = await hashIp('192.168.1.1');
     expect(hash).toMatch(/^[0-9a-f]{64}$/);

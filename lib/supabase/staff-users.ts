@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getAppOrigin } from '@/lib/config/public';
 
 /**
  * Resolves a staff member's auth user id from their email using the
@@ -10,16 +11,19 @@ export async function resolveStaffUserIdByEmail(
 ): Promise<{ id: string | null; error: string | null }> {
   const admin = createAdminClient();
 
-  const invited = await admin.auth.admin.inviteUserByEmail(email);
+  const invited = await admin.auth.admin.inviteUserByEmail(email, { redirectTo:`${getAppOrigin()}/auth/callback?next=%2Fsettings%2Fteam` });
   if (invited.data?.user) return { id: invited.data.user.id, error: null };
 
   const message = invited.error?.message ?? '';
   if (/already|exist|registered/i.test(message)) {
-    const listed = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const match = listed.data?.users.find(
-      u => u.email?.toLowerCase() === email.toLowerCase(),
-    );
-    if (match) return { id: match.id, error: null };
+    for (let page=1; ; page++) {
+      const listed = await admin.auth.admin.listUsers({ page,perPage:1000 });
+      if (listed.error) return { id:null,error:'Could not look up the invited account' };
+      const users = listed.data?.users ?? [];
+      const match = users.find(user => user.email?.toLowerCase()===email.toLowerCase());
+      if (match) return { id:match.id,error:null };
+      if (users.length<1000) break;
+    }
     return { id: null, error: 'No MediLink account found for that email' };
   }
 

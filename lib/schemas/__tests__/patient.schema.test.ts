@@ -34,5 +34,10 @@ describe('Patient Schemas', () => {
          expect(result.error.issues[0].message).toContain('Invalid date format');
       }
     });
+
+    it('accepts an empty optional date but rejects impossible calendar dates',()=>{
+      expect(createPatientSchema.parse({ firstName:'Synthetic',lastName:'Patient',dateOfBirth:'' }).dateOfBirth).toBeNull();
+      expect(createPatientSchema.safeParse({ firstName:'Synthetic',lastName:'Patient',dateOfBirth:'2026-02-30' }).success).toBe(false);
+    });
   });
 });

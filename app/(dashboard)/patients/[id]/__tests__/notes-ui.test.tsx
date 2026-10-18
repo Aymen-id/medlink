@@ -1,0 +1,21 @@
+import { expect,it,vi } from 'vitest';
+import { fireEvent,render,screen,waitFor } from '@testing-library/react';
+import { PatientDetailViews } from '../ClientViews';
+const { update,push }=vi.hoisted(()=>({ update:vi.fn(),push:vi.fn() }));
+vi.mock('next/navigation',()=>({ useRouter:()=>({ refresh:vi.fn(),push }),useSearchParams:()=>new URLSearchParams() }));
+vi.mock('../actions',()=>({ updateNote:update,deleteFile:vi.fn(),deleteFolder:vi.fn(),createFolder:vi.fn(),addNote:vi.fn(),deleteNote:vi.fn(),getSignedUrl:vi.fn(),renameFolder:vi.fn(),updateFile:vi.fn() }));
+it('opens notes, edits only the current authors entries, and pages older history',async()=>{
+  update.mockResolvedValue({ error:'Save failed' });
+  const notes=[{ id:'note-1',patientId:'patient',authorId:'author',content:'Original note',createdAt:'2026-10-17' },{ id:'note-2',patientId:'patient',authorId:'other',content:'Other note',createdAt:'2026-10-16' }];
+  render(<PatientDetailViews patientId="patient" currentFolderId={null} folders={[]} files={[]} notes={notes} permissions="edit" currentUserId="author" canWriteNotes notesPage={2} notesTotalPages={3} />);
+  fireEvent.click(screen.getByRole('tab',{ name:'Appointment Notes' }));
+  expect(await screen.findByText('Original note')).toBeVisible();
+  expect(screen.getAllByRole('button',{ name:'Edit note' })).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button',{ name:'Edit note' }));
+  fireEvent.change(screen.getByLabelText('Edit appointment note'),{ target:{ value:'Updated note' } });
+  fireEvent.click(screen.getByRole('button',{ name:'Save note changes' }));
+  await waitFor(()=>expect(update).toHaveBeenCalledWith('note-1','patient','Updated note'));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Save failed');
+  fireEvent.click(screen.getByRole('button',{ name:'Older notes' }));
+  expect(push).toHaveBeenCalledWith('?tab=notes&notesPage=3');
+});

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, context.ownerId);
 
   const result = await repo.findByUserId();
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, context.ownerId);
 
   // Check slug availability

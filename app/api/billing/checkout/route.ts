@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserContext } from '@/lib/supabase/context';
 import { createClient } from '@/lib/supabase/server';
-import { SubscriptionRepository } from '@/lib/repositories/subscription.repository';
-import { createCheckoutSession } from '@/lib/stripe/checkout';
+import { startBillingCheckout } from '@/lib/stripe/reconciliation';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { rateLimit, getClientIp } from '@/lib/utils/rate-limit';
 import { z } from 'zod';
 
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   const context = await getUserContext();
   if (!context) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
+  const body = await request.json().catch(()=>null);
   const parsed = checkoutSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -36,27 +36,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user?.email) {
     return NextResponse.json({ error: 'User email not found' }, { status: 400 });
   }
 
-  // Check if user already has an active subscription for this tier
-  const subscriptionRepo = new SubscriptionRepository(supabase, context.ownerId);
-  const currentTier = await subscriptionRepo.getTier();
-
-  if (currentTier === parsed.data.tier) {
-    return NextResponse.json(
-      { error: 'You are already subscribed to this tier' },
-      { status: 409 },
-    );
-  }
+  const account=await supabase.from('billing_accounts').select('id').eq('id',context.billingAccountId).eq('billing_admin_id',context.userId).maybeSingle();
+  if(account.error) return NextResponse.json({ error:'Could not verify billing administration' },{ status:503 });
+  if(!account.data) return NextResponse.json({ error:'Only the billing account admin can change the subscription' },{ status:403 });
 
   try {
-    const url = await createCheckoutSession(
-      context.ownerId,
+    const url = await startBillingCheckout(
+      createAdminClient(),context.billingAccountId,
       user.email,
       parsed.data.tier,
       parsed.data.billingInterval,

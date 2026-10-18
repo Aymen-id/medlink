@@ -55,7 +55,7 @@ describe("DesktopSidebar", () => {
     render(<DesktopSidebar user={mockUser} />)
 
     const patientsLink = screen.getByText("Patients").closest("a")
-    expect(patientsLink?.className).toContain("text-[#1E40AF]")
+    expect(patientsLink).toHaveAttribute('aria-current','page')
   })
 
   it("renders user display name and email", () => {

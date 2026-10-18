@@ -41,6 +41,8 @@ export function AnalyticsDashboard() {
   }, [])
 
   useEffect(() => {
+    // A network request starts here; its loading state is part of that external synchronization.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData(days)
   }, [days, fetchData])
 

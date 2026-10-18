@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { LoginInput, ResetPasswordInput, SignupInput, UpdatePasswordInput } from "../schemas/auth.schema";
+import { getAppOrigin } from '@/lib/config/public';
 
 export class AuthRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -12,6 +13,7 @@ export class AuthRepository {
       email: input.email,
       password: input.password,
       options: {
+        emailRedirectTo: `${getAppOrigin()}/auth/callback`,
         data: {
           display_name: input.displayName,
         }
@@ -39,7 +41,7 @@ export class AuthRepository {
 
   async resetPassword(input: ResetPasswordInput) {
     const { data, error } = await this.supabase.auth.resetPasswordForEmail(input.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password/update`,
+      redirectTo: `${getAppOrigin()}/auth/callback?next=%2Freset-password%2Fupdate`,
     });
     
     if (error) return { data: null, error: error.message };

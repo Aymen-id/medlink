@@ -109,7 +109,7 @@ function NewPatientDialog({ open, onOpenChange }: { open: boolean, onOpenChange:
   );
 }
 
-export function PatientList({ initialPatients }: { initialPatients: Patient[] }) {
+export function PatientList({ initialPatients,canEdit=true }: { initialPatients: Patient[];canEdit?:boolean }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
 
@@ -120,7 +120,7 @@ export function PatientList({ initialPatients }: { initialPatients: Patient[] })
           <h2 className="text-2xl font-bold tracking-tight text-gray-900">Patients</h2>
           <p className="text-sm text-gray-500">Manage your patient roster and access their encrypted files.</p>
         </div>
-        <NewPatientDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        {canEdit && <NewPatientDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />}
       </div>
 
       {initialPatients.length === 0 ? (
@@ -128,8 +128,8 @@ export function PatientList({ initialPatients }: { initialPatients: Patient[] })
           icon={Users}
           title="No patients found"
           description="It looks like you haven't added any patients yet. Start by adding a new patient to manage their files and notes."
-          actionLabel="Add your first patient"
-          onAction={() => setIsDialogOpen(true)}
+          actionLabel={canEdit ? 'Add your first patient' : undefined}
+          onAction={canEdit ? () => setIsDialogOpen(true) : undefined}
         />
       ) : (
         <div className="border rounded-md">

@@ -1,5 +1,25 @@
 export type UserRole = 'owner' | 'receptionist' | 'assistant';
 
+export type BillingAccount = {
+  id: string;
+  billingAdminId: string;
+  createdAt: string;
+};
+
+export type PhysicianWorkspace = {
+  id: string;
+  ownerUserId: string;
+  billingAccountId: string;
+  createdAt: string;
+};
+
+export type WorkspaceMembership = {
+  workspaceId: string;
+  userId: string;
+  role: UserRole;
+  permissions: 'view' | 'edit';
+};
+
 export type User = {
   id: string; // from auth.users
   email: string;
@@ -77,12 +97,22 @@ export type ProfileAnalytics = {
 };
 
 export type StaffAccess = {
+  email?: string | null;
   id: string;
   ownerId: string;
   staffUserId: string;
   role: 'receptionist' | 'assistant';
   permissions: 'view' | 'edit';
   grantedAt: string;
+};
+
+export type TeamInvitation = {
+  id:string;
+  invited_email:string;
+  kind:'staff' | 'provider';
+  status:'pending' | 'accepted' | 'revoked' | 'expired';
+  invited_by:string;
+  expires_at:string;
 };
 
 export type SubscriptionTier = 'free' | 'pro' | 'clinic';
@@ -97,4 +127,5 @@ export type Subscription = {
   currentPeriodEnd: string;
   createdAt: string;
   updatedAt: string;
+  billingInterval?:'monthly' | 'annual' | null;
 };

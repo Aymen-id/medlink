@@ -4,19 +4,21 @@ import { createClient } from '@/lib/supabase/server';
 import { ProfileRepository } from '@/lib/repositories/profile.repository';
 import { PublicProfile } from '@/components/profile/PublicProfile';
 import { headers } from 'next/headers';
-import { createHash } from 'crypto';
+import { after } from 'next/server';
+import { trackProfileEvent } from '@/lib/analytics/track';
+import { serializeJsonLd } from '@/lib/utils/json-ld';
 
 type Props = {
-  params: { drname: string };
+  params: Promise<{ drname: string }>;
 };
 
 /**
  * Generate dynamic SEO metadata for the public profile page.
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, '');
-  const { data: profile } = await repo.findBySlug(params.drname);
+  const { data: profile } = await repo.findBySlug((await params).drname);
 
   if (!profile) {
     return {
@@ -77,43 +79,23 @@ function generateJsonLd(profile: NonNullable<Awaited<ReturnType<ProfileRepositor
  * Records a profile view in profile_analytics.
  * Non-blocking — errors are silently swallowed to avoid impacting page render.
  */
-async function recordView(
-  supabase: ReturnType<typeof createClient>,
-  profileId: string,
-): Promise<void> {
-  const headersList = headers();
-  const userAgent = headersList.get('user-agent') ?? null;
-  const referer = headersList.get('referer') ?? null;
-  const forwarded = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? '';
-
-  // Hash the IP — never store raw IP (privacy/HIPAA)
-  const ipHash = forwarded
-    ? createHash('sha256').update(forwarded.split(',')[0].trim()).digest('hex').slice(0, 16)
-    : null;
-
-  await supabase.from('profile_analytics').insert({
-    profile_id: profileId,
-    referral_source: referer,
-    user_agent: userAgent,
-    ip_hash: ipHash,
-  });
-}
 
 /**
  * Public profile page — SSR, no auth required.
  */
 export default async function PublicProfilePage({ params }: Props) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, '');
 
-  const { data: profile } = await repo.findBySlug(params.drname);
+  const { data: profile } = await repo.findBySlug((await params).drname);
 
   if (!profile) {
     notFound();
   }
 
   // Record analytics view (fire-and-forget, non-blocking)
-  void recordView(supabase, profile.id);
+  const requestHeaders=await headers();
+  after(() => trackProfileEvent(profile.id,{ type:'view' },requestHeaders).catch(() => undefined));
 
   const jsonLd = generateJsonLd(profile);
 
@@ -121,7 +103,7 @@ export default async function PublicProfilePage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <PublicProfile profile={profile} />
     </>

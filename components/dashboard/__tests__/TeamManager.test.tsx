@@ -71,10 +71,10 @@ describe('TeamManager', () => {
   });
 
   it('revokes after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<TeamManager initialStaff={[row({ id: 'sa-9' })]} />);
 
     fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+    fireEvent.click(screen.getByRole('button',{ name:'Confirm deletion' }));
 
     await waitFor(() => {
       const [url, init] = fetchMock.mock.calls[0];

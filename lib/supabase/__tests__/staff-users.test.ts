@@ -14,6 +14,7 @@ import { resolveStaffUserIdByEmail } from '../staff-users';
 describe('resolveStaffUserIdByEmail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://clinic.example');
   });
 
   it('returns the invited user id when invite succeeds', async () => {
@@ -69,5 +70,13 @@ describe('resolveStaffUserIdByEmail', () => {
     const result = await resolveStaffUserIdByEmail('x@y.z');
 
     expect(result).toEqual({ id: null, error: 'SMTP unavailable' });
+  });
+
+  it('finds existing users beyond the first directory page', async () => {
+    inviteUserByEmail.mockResolvedValue({ data:{ user:null }, error:{ message:'Already registered' } });
+    listUsers.mockResolvedValueOnce({ data:{ users:Array.from({ length:1000 }, (_, index) => ({ id:`user-${index}`,email:`other-${index}@synthetic.test` })) }, error:null })
+      .mockResolvedValueOnce({ data:{ users:[{ id:'late-user',email:'late@synthetic.test' }] }, error:null });
+    expect(await resolveStaffUserIdByEmail('late@synthetic.test')).toEqual({ id:'late-user',error:null });
+    expect(listUsers).toHaveBeenLastCalledWith({ page:2,perPage:1000 });
   });
 });

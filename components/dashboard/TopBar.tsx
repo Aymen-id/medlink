@@ -65,6 +65,7 @@ export function TopBar({ user }: TopBarProps) {
           placeholder="Search patients, files..."
           className="pl-9 h-8 bg-muted/50 border-0 focus-visible:ring-1"
           aria-label="Search patients and files"
+          data-testid="search-input"
         />
       </form>
 
@@ -80,6 +81,7 @@ export function TopBar({ user }: TopBarProps) {
               size="icon"
               className="rounded-full"
               aria-label="User menu"
+              data-testid="user-menu-trigger"
             />
           }
         >
@@ -111,7 +113,11 @@ export function TopBar({ user }: TopBarProps) {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={handleLogout}
+            data-testid="user-menu-logout"
+          >
             <LogOut className="size-4" />
             Log out
           </DropdownMenuItem>

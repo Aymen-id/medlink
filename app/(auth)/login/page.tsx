@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { loginSchema, type LoginInput } from "@/lib/schemas/auth.schema"
+import { safeRedirectPath } from '@/lib/utils/redirect'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -38,7 +39,7 @@ export default function LoginPage() {
       
       if (signInError) throw signInError
       
-      router.push("/patients") // Or dashboard home
+      router.push(safeRedirectPath(new URL(window.location.href).searchParams.get('next')))
       router.refresh()
     } catch (err: unknown) {
       setError((err as Error).message || "Invalid credentials. Please try again.")
@@ -54,7 +55,7 @@ export default function LoginPage() {
         <p className="text-sm text-gray-500 mt-2">Log in to your workspace</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
             {error}

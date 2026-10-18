@@ -51,7 +51,7 @@ export function SearchResults({ query, patients, files }: SearchResultsProps) {
             {files.map(f => (
               <li key={f.id}>
                 <Link
-                  href={`/patients/${f.patientId}`}
+                  href={`/patients/${f.patientId}${f.folderId ? `?folderId=${encodeURIComponent(f.folderId)}`:''}`}
                   className="block px-4 py-3 text-sm hover:bg-accent/40"
                 >
                   {f.fileName}

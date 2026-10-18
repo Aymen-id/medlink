@@ -5,25 +5,29 @@ import { PatientRepository } from '@/lib/repositories/patient.repository';
 import { getFiles, getFolders } from './actions';
 import { NoteRepository } from '@/lib/repositories/note.repository';
 import { PatientDetailViews } from './ClientViews';
+import { PatientControls } from './PatientControls';
+import { z } from 'zod';
+import { getWorkspaceTier } from '@/lib/supabase/entitlements';
+import { ExportButton } from './ExportButton';
 
 export const metadata = {
   title: 'Patient Details | MediLink',
 };
 
 type Props = {
-  params: { id: string };
-  searchParams: { folderId?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ folderId?: string;filePage?:string;folderPage?:string;notesPage?:string }>;
 };
 
 export default async function PatientDetailPage({ params, searchParams }: Props) {
   const context = await getUserContext();
   if (!context) redirect('/login');
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const patientRepo = new PatientRepository(supabase, context.ownerId);
 
   // Fetch patient
-  const { data: patient, error: patientError } = await patientRepo.getById(params.id);
+  const { data: patient, error: patientError } = await patientRepo.getById((await params).id);
   if (patientError || !patient) {
     return (
       <div className="p-8 text-center text-red-500">
@@ -34,15 +38,20 @@ export default async function PatientDetailPage({ params, searchParams }: Props)
   }
 
   // Fetch folders and files for the current folder view
-  const currentFolderId = searchParams.folderId ?? null;
-  const [{ data: folders }, { data: files }] = await Promise.all([
-    getFolders(patient.id, currentFolderId),
-    getFiles(patient.id, currentFolderId),
+  const query=await searchParams;
+  const currentFolderId = query.folderId ?? null;
+  const page=(value:string | undefined)=>z.coerce.number().int().min(1).max(100000).catch(1).parse(value ?? 1);
+  const filePage=page(query.filePage),folderPage=page(query.folderPage);
+  const [folderResult,fileResult] = await Promise.all([
+    getFolders(patient.id, currentFolderId,folderPage),
+    getFiles(patient.id, currentFolderId,filePage),
   ]);
+  const folders=folderResult.data ?? [],files=fileResult.data ?? [];
 
   // Fetch appointment notes
   const noteRepo = new NoteRepository(supabase, context.userId, context.ownerId);
-  const { data: notes } = await noteRepo.listByPatient(patient.id, { limit: 100 });
+  const notesPage=page(query.notesPage);
+  const [noteResult,tier]=await Promise.all([noteRepo.listByPatient(patient.id, { page:notesPage,limit:25 }),getWorkspaceTier(supabase,context.workspaceId)]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
@@ -71,22 +80,21 @@ export default async function PatientDetailPage({ params, searchParams }: Props)
           </div>
         </div>
         <div className="mt-4 md:mt-0">
-          <a
-            href={`/api/patients/${patient.id}/export`}
-            download
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-          >
-            Export All Files (ZIP)
-          </a>
+          {context.permissions!=='view' && <PatientControls patient={patient} />}
+          <ExportButton patientId={patient.id} />
         </div>
       </div>
 
       <PatientDetailViews
         patientId={patient.id}
         currentFolderId={currentFolderId}
-        folders={folders ?? []}
-        files={files ?? []}
-        notes={notes ?? []}
+        folders={folders.slice(0,50)}
+        files={files.slice(0,50)}
+        filePage={filePage} folderPage={folderPage} moreFiles={files.length>50} moreFolders={folders.length>50}
+        loadError={folderResult.error || fileResult.error}
+        notes={noteResult.data ?? []}
+        currentUserId={context.userId} canWriteNotes={!tier.error && tier.data!=='free'}
+        notesPage={notesPage} notesTotalPages={noteResult.meta?.totalPages ?? 1} notesError={noteResult.error || tier.error}
         permissions={context.permissions ?? 'edit'} // owners are mapped without 'permissions', assuming edit
       />
     </div>

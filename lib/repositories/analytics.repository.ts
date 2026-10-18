@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ProfileAnalytics } from '@/types';
 import type { ApiResponse } from '@/types/api';
+import { getServerConfig } from '@/lib/config/server';
+import { z } from 'zod';
 
 export type AnalyticsSummary = {
   totalViews: number;
@@ -24,7 +26,7 @@ export type SourceMetric = {
  * Never stores raw IPs — hashed for unique visitor counting only.
  */
 export async function hashIp(ip: string): Promise<string> {
-  const salt = process.env.IP_HASH_SALT ?? 'medilink-default-salt';
+  const salt = getServerConfig('analytics').IP_HASH_SALT;
   const encoder = new TextEncoder();
   const data = encoder.encode(`${salt}:${ip}`);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -37,6 +39,12 @@ export class AnalyticsRepository {
     private readonly supabase: SupabaseClient,
     private readonly profileId: string,
   ) {}
+
+  async getDashboard(days=30) {
+    const { data,error }=await this.supabase.rpc('get_profile_analytics',{ profile:this.profileId,days });
+    const parsed=z.object({ summary:z.object({ totalViews:z.number(),totalClicks:z.number(),ctr:z.number() }),daily:z.array(z.object({ date:z.string(),views:z.number(),clicks:z.number() })),referrers:z.array(z.object({ source:z.string(),count:z.number() })) }).safeParse(data);
+    return error || !parsed.success ? { data:null,error:'Could not load profile analytics' }:{ data:parsed.data,error:null };
+  }
 
   /**
    * Records a profile view event.
@@ -103,7 +111,7 @@ export class AnalyticsRepository {
 
     if (error) return { data: null, error: error.message };
 
-    const totalViews = data.length;
+    const totalViews = data.filter(row=>row.link_clicked===null).length;
     const totalClicks = data.filter((row) => row.link_clicked !== null).length;
     const ctr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
 
@@ -147,7 +155,7 @@ export class AnalyticsRepository {
       const dateStr = row.viewed_at.split('T')[0];
       const metric = dailyMap.get(dateStr);
       if (metric) {
-        metric.views += 1;
+        if(row.link_clicked===null) metric.views += 1;
         if (row.link_clicked) metric.clicks += 1;
       }
     });
@@ -170,7 +178,7 @@ export class AnalyticsRepository {
       .select('referral_source')
       .eq('profile_id', this.profileId)
       .gte('viewed_at', startDate.toISOString())
-      .not('referral_source', 'is', null);
+      .is('link_clicked', null);
 
     if (error) return { data: null, error: error.message };
 
