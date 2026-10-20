@@ -59,4 +59,13 @@ describe("DashboardShell", () => {
     )
     expect(screen.getByPlaceholderText("Search patients, files...")).toBeDefined()
   })
+
+  it("provides a skip link to a focusable main landmark", () => {
+    render(<DashboardShell user={mockUser}><h1>Settings</h1></DashboardShell>)
+    const main = screen.getByRole("main")
+    expect(main).toHaveAttribute("tabindex", "-1")
+    expect(screen.getByRole("link", { name: "Skip to main content" }))
+      .toHaveAttribute("href", `#${main.id}`)
+    expect(main.id).not.toBe("")
+  })
 })

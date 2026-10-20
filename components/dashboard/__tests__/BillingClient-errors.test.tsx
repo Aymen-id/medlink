@@ -12,7 +12,7 @@ it('shows rejected purchases and leaves retry available',async()=>{
 });
 it('allows changing the billing interval of the current plan',()=>{
   const select=vi.fn();render(<PricingTable currentTier="pro" currentInterval="monthly" onSelectTier={select} />);
-  fireEvent.click(screen.getByRole('button',{ name:/Annual/ }));
+  fireEvent.click(screen.getByRole('radio',{ name:/Annual/ }));
   fireEvent.click(screen.getByRole('button',{ name:'Change Pro billing' }));
   expect(select).toHaveBeenCalledWith('pro','annual');
 });

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 
 // Mock next/navigation
 const mockPush = vi.fn()
@@ -78,5 +79,19 @@ describe("TopBar", () => {
     fireEvent.submit(searchInput.closest("form")!)
 
     expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["Public Profile", "/settings/profile"],
+    ["Settings", "/settings"],
+  ])("opens the account menu and sends %s to its distinct destination", async (label, destination) => {
+    const user = userEvent.setup()
+    render(<TopBar user={mockUser} />)
+    await user.click(screen.getByRole("button", { name: "User menu" }))
+    expect(await screen.findByRole("menu")).toBeVisible()
+    expect(screen.getByText("Current workspace")).toBeVisible()
+    expect(screen.getByText("Signed in as")).toBeVisible()
+    await user.click(screen.getByRole("menuitem", { name: label }))
+    expect(mockPush).toHaveBeenCalledWith(destination)
   })
 })

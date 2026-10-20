@@ -22,14 +22,9 @@ export default async function TeamPage() {
   const { data:providers }=account ? await supabase.from('physician_workspaces').select('id,owner_user_id').eq('billing_account_id',account.id) : { data:[] };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-      <h1 className="text-2xl font-semibold mb-1">Team Access</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Clinic includes up to eight physician workspaces, including pending provider invitations.
-        Staff receive explicit access to the selected workspace after accepting an invitation.
-      </p>
+    <>
       {error && <p role="alert" className="mb-4 text-destructive">Could not load invitations. Please refresh and try again.</p>}
       <TeamManager initialStaff={staff ?? []} invitations={(invitations ?? []) as TeamInvitation[]} currentUserId={context.userId} currentEmail={context.email ?? ''} canInvite={context.role==='owner'} providers={providers ?? []} />
-    </div>
+    </>
   );
 }

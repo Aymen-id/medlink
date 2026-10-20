@@ -127,3 +127,78 @@
 @utility text-balance {
   text-wrap: balance;
 }
+
+/* Enhancement only: no JS, reduced motion and unsupported timelines stay static. */
+@media (min-width: 64rem) and (min-height: 40rem) {
+  .features-context {
+    position: sticky;
+    top: 6rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .features-context[data-motion="ready"] .features-visual-scene {
+    transition: opacity 240ms ease-out;
+  }
+
+  .features-context[data-motion="ready"] [data-active="true"] .features-visual-file {
+    animation: features-file-settle 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .features-context[data-motion="ready"] [data-active="true"] .features-visual-file-1 { animation-delay: 80ms; }
+  .features-context[data-motion="ready"] [data-active="true"] .features-visual-file-2 { animation-delay: 160ms; }
+
+  .features-context[data-motion="ready"] [data-active="true"] .features-visual-note-lines {
+    transform-box: fill-box;
+    transform-origin: left;
+    animation: features-note-appear 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .features-context[data-motion="ready"] [data-active="true"] .features-visual-profile {
+    animation: features-profile-appear 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @supports (animation-timeline: view()) and (animation-range: entry 0% cover 35%) {
+    .features-roadmap[data-motion="ready"] .features-roadmap-step {
+      view-timeline-name: --features-step;
+      view-timeline-axis: block;
+    }
+
+    .features-roadmap[data-motion="ready"] .features-roadmap-copy {
+      animation: features-roadmap-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+
+    .features-roadmap[data-motion="ready"] .features-roadmap-progress {
+      animation: features-roadmap-progress linear both;
+      animation-timeline: --features-step;
+      animation-range: entry 75% cover 85%;
+    }
+  }
+}
+
+@keyframes features-roadmap-reveal {
+  from { opacity: 0.85; transform: translateY(1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes features-roadmap-progress {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes features-file-settle {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes features-note-appear {
+  from { opacity: 0; transform: scaleX(0.7); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes features-profile-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

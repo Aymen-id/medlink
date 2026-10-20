@@ -55,18 +55,21 @@ function getInitials(name: string): string {
 function NavLink({
   item,
   isActive,
+  isExact,
 }: {
   readonly item: NavItem
   readonly isActive: boolean
+  readonly isExact: boolean
 }) {
   const Icon = item.icon
   return (
     <Link
       href={item.href}
       data-testid={`nav-${item.label.toLowerCase()}`}
-      aria-current={isActive ? 'page':undefined}
+      aria-current={isActive ? item.href === "/settings" && !isExact ? "location" : "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        item.href === "/settings" && "min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:min-h-9",
         isActive
           ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -106,6 +109,7 @@ function SidebarNav({ user }: { readonly user: SidebarUser }) {
             key={item.href}
             item={item}
             isActive={pathname.startsWith(item.href)}
+            isExact={pathname === item.href}
           />
         ))}
       </nav>

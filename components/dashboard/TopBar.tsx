@@ -79,7 +79,7 @@ export function TopBar({ user }: TopBarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full"
+              className="size-11 rounded-full transition-colors md:size-8"
               aria-label="User menu"
               data-testid="user-menu-trigger"
             />
@@ -92,33 +92,33 @@ export function TopBar({ user }: TopBarProps) {
             <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={8}>
-          <DropdownMenuLabel>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{user.displayName}</span>
-              <span className="text-xs text-muted-foreground">
-                {user.email}
-              </span>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" sideOffset={8} className="w-72 max-w-[calc(100vw-2rem)]">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <User className="size-4" />
-              Profile
+            <DropdownMenuLabel className="px-3 py-2">
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Current workspace</span>
+                <span className="break-words text-sm font-medium text-foreground">{user.displayName}</span>
+                <span className="mt-2 text-xs text-muted-foreground">Signed in as</span>
+                <span className="break-all text-sm font-normal text-foreground">{user.email}</span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="min-h-11 gap-3 px-3 md:min-h-8" onClick={() => router.push("/settings/profile")}>
+              <User aria-hidden="true" className="size-4" />
+              Public Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <Settings className="size-4" />
+            <DropdownMenuItem className="min-h-11 gap-3 px-3 md:min-h-8" onClick={() => router.push("/settings")}>
+              <Settings aria-hidden="true" className="size-4" />
               Settings
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            variant="destructive"
+            className="min-h-11 gap-3 px-3 md:min-h-8"
             onClick={handleLogout}
             data-testid="user-menu-logout"
           >
-            <LogOut className="size-4" />
+            <LogOut aria-hidden="true" className="size-4" />
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
