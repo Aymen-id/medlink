@@ -5,7 +5,18 @@ import { Phone, MessageCircle, Mail, ExternalLink } from 'lucide-react';
 type ContactCTAProps = {
   contactCTA: string | null;
   bookingCTA: string | null;
+  profileId?: string;
 };
+
+function trackClick(profileId: string, linkType: string): void {
+  // keepalive so the POST survives navigating away (tel:/external links)
+  void fetch('/api/analytics/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profileId, type: 'click', linkType }),
+    keepalive: true,
+  }).catch(() => undefined); // analytics must never break navigation
+}
 
 function getContactType(cta: string): 'phone' | 'whatsapp' | 'email' | 'link' {
   if (cta.startsWith('mailto:') || cta.includes('@')) return 'email';
@@ -41,7 +52,7 @@ const LABEL_MAP = {
   link: 'Contact',
 };
 
-export function ContactCTA({ contactCTA, bookingCTA }: ContactCTAProps) {
+export function ContactCTA({ contactCTA, bookingCTA, profileId }: ContactCTAProps) {
   if (!contactCTA && !bookingCTA) return null;
 
   const contactType = contactCTA ? getContactType(contactCTA) : null;
@@ -55,6 +66,7 @@ export function ContactCTA({ contactCTA, bookingCTA }: ContactCTAProps) {
             href={formatContactHref(contactCTA, contactType)}
             target={contactType === 'link' ? '_blank' : undefined}
             rel={contactType === 'link' ? 'noopener noreferrer' : undefined}
+            onClick={() => { if (profileId && contactType) trackClick(profileId, contactType); }}
             className={cn(
               buttonVariants({ variant: 'default', size: 'lg' }),
               'flex-1 bg-blue-800 hover:bg-blue-700 text-white h-12 text-base justify-center',
@@ -70,6 +82,7 @@ export function ContactCTA({ contactCTA, bookingCTA }: ContactCTAProps) {
           href={bookingCTA.startsWith('http') ? bookingCTA : `https://${bookingCTA}`}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => { if (profileId) trackClick(profileId, 'booking'); }}
           className={cn(
             buttonVariants({ variant: 'outline', size: 'lg' }),
             'flex-1 border-blue-800 text-blue-800 hover:bg-blue-50 h-12 text-base justify-center',

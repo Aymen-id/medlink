@@ -213,7 +213,7 @@ describe('PatientRepository', () => {
       expect(mock.chainable.select).toHaveBeenCalled();
       expect(mock.chainable.eq).toHaveBeenCalledWith('owner_id', OWNER_ID);
       expect(mock.chainable.or).toHaveBeenCalledWith(
-        'first_name.ilike.%Jan%,last_name.ilike.%Jan%',
+        'first_name.ilike."%Jan%",last_name.ilike."%Jan%"',
       );
       expect(result.data).toHaveLength(1);
       expect(result.error).toBeNull();

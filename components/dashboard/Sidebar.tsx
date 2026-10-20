@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import {
-  Activity,
   Users,
   BarChart3,
   Settings,
@@ -55,18 +55,23 @@ function getInitials(name: string): string {
 function NavLink({
   item,
   isActive,
+  isExact,
 }: {
   readonly item: NavItem
   readonly isActive: boolean
+  readonly isExact: boolean
 }) {
   const Icon = item.icon
   return (
     <Link
       href={item.href}
+      data-testid={`nav-${item.label.toLowerCase()}`}
+      aria-current={isActive ? item.href === "/settings" && !isExact ? "location" : "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        item.href === "/settings" && "min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:min-h-9",
         isActive
-          ? "bg-[#1E40AF]/10 text-[#1E40AF]"
+          ? "bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
       )}
     >
@@ -91,8 +96,8 @@ function SidebarNav({ user }: { readonly user: SidebarUser }) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-5">
-        <Activity className="size-6 text-[#1E40AF]" />
-        <span className="text-lg font-bold tracking-tight">{APP_NAME}</span>
+        <Image src="/medilink-logo.svg" alt={APP_NAME} width={136} height={32} />
+        <span className="sr-only">{APP_NAME}</span>
       </div>
 
       <Separator />
@@ -104,6 +109,7 @@ function SidebarNav({ user }: { readonly user: SidebarUser }) {
             key={item.href}
             item={item}
             isActive={pathname.startsWith(item.href)}
+            isExact={pathname === item.href}
           />
         ))}
       </nav>
@@ -131,6 +137,7 @@ function SidebarNav({ user }: { readonly user: SidebarUser }) {
           size="sm"
           className="mt-1 w-full justify-start gap-2 text-muted-foreground"
           onClick={handleLogout}
+          data-testid="sidebar-logout"
         >
           <LogOut className="size-4" />
           Log out

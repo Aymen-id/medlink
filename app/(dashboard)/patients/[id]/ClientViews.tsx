@@ -6,13 +6,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Folder, FileText, Plus, Trash2, Download, ArrowLeft, UploadCloud } from 'lucide-react';
-import { deleteFile, uploadFileAction, createFolder, deleteFolder, addNote, deleteNote, getSignedUrl } from './actions';
+import { deleteFile, createFolder, deleteFolder, getSignedUrl } from './actions';
+import { uploadPatientDocument } from '@/lib/uploads/client';
 import type { PatientFile, AppointmentNote, Folder as FolderType } from '@/types';
+import { FileEdit,FolderRename } from './FileControls';
+import { NotesView } from './NotesView';
+import { ConfirmAction } from '@/components/ui/confirm-action';
 
 type DetailProps = {
   patientId: string;
@@ -21,11 +24,22 @@ type DetailProps = {
   files: PatientFile[];
   notes: AppointmentNote[];
   permissions: 'view' | 'edit';
+  filePage?:number;
+  folderPage?:number;
+  moreFiles?:boolean;
+  moreFolders?:boolean;
+  loadError?:string | null;
+  currentUserId?:string;
+  canWriteNotes?:boolean;
+  notesPage?:number;
+  notesTotalPages?:number;
+  notesError?:string | null;
 };
 
-export function PatientDetailViews({ patientId, currentFolderId, folders, files, notes, permissions }: DetailProps) {
+export function PatientDetailViews({ patientId, currentFolderId, folders, files, notes, permissions,...paging }: DetailProps) {
+  const query=useSearchParams();
   return (
-    <Tabs value="files" className="w-full">
+    <Tabs defaultValue={query.get('tab')==='notes' ? 'notes':'files'} className="w-full">
       <TabsList className="mb-6 border-b border-gray-200 bg-transparent gap-6 pb-2" variant="line">
         <TabsTrigger value="files" className="text-base px-2">Files & Folders</TabsTrigger>
         <TabsTrigger value="notes" className="text-base px-2">Appointment Notes</TabsTrigger>
@@ -38,6 +52,7 @@ export function PatientDetailViews({ patientId, currentFolderId, folders, files,
           folders={folders} 
           files={files} 
           permissions={permissions} 
+          {...paging}
         />
       </TabsContent>
 
@@ -46,6 +61,7 @@ export function PatientDetailViews({ patientId, currentFolderId, folders, files,
           patientId={patientId} 
           notes={notes} 
           permissions={permissions} 
+          {...paging}
         />
       </TabsContent>
     </Tabs>
@@ -55,15 +71,21 @@ export function PatientDetailViews({ patientId, currentFolderId, folders, files,
 // ------------------------------------------------------------------------------------------
 // FILES VIEW
 // ------------------------------------------------------------------------------------------
-function FilesView({ patientId, currentFolderId, folders, files, permissions }: Omit<DetailProps, 'notes'>) {
+function FilesView({ patientId, currentFolderId, folders, files, permissions,filePage=1,folderPage=1,moreFiles=false,moreFolders=false,loadError }: Omit<DetailProps, 'notes'>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isUploading, setIsUploading] = useState(false);
   const [isFolderCreating, setIsFolderCreating] = useState(false);
   const [folderName, setFolderName] = useState('');
+  const [uploadError,setUploadError]=useState<string | null>(null);
+  const [uploadNotice,setUploadNotice]=useState<string | null>(null);
+  const [isFolderOpen,setIsFolderOpen]=useState(false);
+  const [isUploadOpen,setIsUploadOpen]=useState(false);
+  const [folderError,setFolderError]=useState<string | null>(null);
 
   const navigateToFolder = (id: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('filePage');params.delete('folderPage');
     if (id) {
       params.set('folderId', id);
     } else {
@@ -76,16 +98,18 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
     e.preventDefault();
     if (permissions === 'view') return;
     
-    setIsUploading(true);
+    setIsUploading(true);setUploadError(null);setUploadNotice(null);
     const formData = new FormData(e.currentTarget);
-    const res = await uploadFileAction(patientId, currentFolderId, formData);
+    const file=formData.get('file');
+    if(!(file instanceof File)) { setUploadError('Choose a file to upload');setIsUploading(false);return; }
+    const tags=String(formData.get('tags') ?? '').split(',').map(tag=>tag.trim()).filter(Boolean);
+    const res = await uploadPatientDocument(patientId,currentFolderId,file,tags);
     setIsUploading(false);
 
     if (!res.error) {
-      // close dialog via uncontrolled DOM or state (kept simple here, would need fully controlled state ideally)
-      alert('Upload successful');
+      setUploadNotice('Upload successful');setIsUploadOpen(false);router.refresh();
     } else {
-      alert(res.error);
+      setUploadError(res.error);
     }
   };
 
@@ -93,29 +117,19 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
     e.preventDefault();
     if (permissions === 'view' || !folderName.trim()) return;
 
-    setIsFolderCreating(true);
-    const res = await createFolder({ patientId, name: folderName, parentId: currentFolderId });
-    setIsFolderCreating(false);
-
-    if (!res.error) {
-      setFolderName('');
-    } else {
-      alert(res.error);
-    }
+    setIsFolderCreating(true);setFolderError(null);
+    try {
+      const res = await createFolder({ patientId, name: folderName, parentId: currentFolderId });
+      if (!res.error) { setFolderName('');setIsFolderOpen(false);router.refresh(); } else setFolderError(res.error);
+    } catch { setFolderError('Could not create folder. Please retry.'); }
+    finally { setIsFolderCreating(false); }
   };
 
-  const handleDeleteFile = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this file?')) return;
-    await deleteFile(id, patientId);
-  };
-
-  const handleDeleteFolder = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this folder? All contents will be lost.')) return;
-    await deleteFolder(id, patientId);
-  };
 
   const handleDownload = async (id: string, name: string) => {
-    const { data: url } = await getSignedUrl(id);
+    try {
+    const { data: url,error } = await getSignedUrl(id);
+    if(error) setUploadError(error);
     if (url) {
       const a = document.createElement('a');
       a.href = url;
@@ -123,6 +137,7 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
       a.target = '_blank';
       a.click();
     }
+    } catch { setUploadError('Download failed. Please retry.'); }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,6 +157,9 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
 
   return (
     <div className="space-y-4">
+      {uploadError && !isUploadOpen && <p role="alert" className="text-sm text-destructive">{uploadError}</p>}
+      {loadError && <p role="alert" className="text-sm text-destructive">{loadError} Reload to retry.</p>}
+      {uploadNotice && <p role="status" className="text-sm text-muted-foreground">{uploadNotice}</p>}
       {/* Action Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50 p-4 rounded-lg border">
         <div className="flex items-center gap-2 w-full md:w-auto">
@@ -154,7 +172,7 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
             {currentFolderId ? 'Subfolder View' : 'Root Directory'}
           </span>
           <Input 
-            placeholder="Search files or tags..." 
+            placeholder="Filter this page by name or tags..." aria-label="Filter this page"
             className="w-full sm:w-64 max-w-sm h-8 !mt-0 ml-0 sm:ml-4" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -163,15 +181,16 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
         
         {permissions === 'edit' && (
           <div className="flex gap-2">
-            <Dialog>
+            <Dialog open={isFolderOpen} onOpenChange={open=>{setIsFolderOpen(open);setFolderError(null);}}>
               <DialogTrigger render={<Button variant="outline" size="sm" />}>
                 <Plus className="w-4 h-4 mr-2" /> New Folder
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Create Folder</DialogTitle></DialogHeader>
                 <form onSubmit={handleCreateFolder} className="space-y-4 pt-4">
+                  {folderError && <p role="alert" className="text-sm text-destructive">{folderError}</p>}
                   <Input 
-                    placeholder="Folder Name" 
+                    placeholder="Folder Name" aria-label="Folder name"
                     value={folderName}
                     onChange={(e) => setFolderName(e.target.value)}
                     required
@@ -183,13 +202,14 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
               </DialogContent>
             </Dialog>
 
-            <Dialog>
+            <Dialog open={isUploadOpen} onOpenChange={open=>{setIsUploadOpen(open);setUploadError(null);setUploadNotice(null);}}>
               <DialogTrigger render={<Button size="sm" className="bg-blue-800 text-white hover:bg-blue-900" />}>
                 <UploadCloud className="w-4 h-4 mr-2" /> Upload File
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Upload File</DialogTitle></DialogHeader>
                 <form onSubmit={handleUpload} className="space-y-4 pt-4">
+                  {uploadError && <p role="alert" className="text-sm text-destructive">{uploadError}</p>}
                   <div className="space-y-2">
                     <Label htmlFor="file">Select File</Label>
                     <Input id="file" name="file" type="file" required />
@@ -239,9 +259,12 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
                   <TableCell className="text-gray-500">{new Date(folder.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     {permissions === 'edit' && (
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteFolder(folder.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <FolderRename folder={folder} />
+                    )}
+                    {permissions === 'edit' && (
+                      <ConfirmAction triggerLabel={`Delete folder ${folder.name}`} title="Delete this folder?" description="Delete this folder and its subfolders. Files are preserved and moved to the patient root directory." variant="ghost" size="sm" className="text-destructive" onConfirm={()=>deleteFolder(folder.id,patientId)} onSuccess={()=>router.refresh()}>
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </ConfirmAction>
                     )}
                   </TableCell>
                 </TableRow>
@@ -258,13 +281,16 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
                   <TableCell className="text-gray-500 text-sm">{(file.sizeBytes / 1024).toFixed(1)} KB</TableCell>
                   <TableCell className="text-gray-500 text-sm">{new Date(file.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right space-x-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleDownload(file.id, file.fileName)} className="text-gray-600 hover:text-blue-800 hover:bg-blue-50">
+                    <Button aria-label={`Download ${file.fileName}`} variant="ghost" size="sm" onClick={() => handleDownload(file.id, file.fileName)} className="text-gray-600 hover:text-blue-800 hover:bg-blue-50">
                       <Download className="w-4 h-4" />
                     </Button>
                     {permissions === 'edit' && (
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteFile(file.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                      <FileEdit file={file} folders={folders} />
+                    )}
+                    {permissions === 'edit' && (
+                      <ConfirmAction triggerLabel={`Delete file ${file.fileName}`} title="Delete this file?" description="The file will no longer be accessible. Permanent Storage removal is retried automatically if necessary." variant="ghost" size="sm" className="text-destructive" onConfirm={()=>deleteFile(file.id,patientId)} onSuccess={()=>router.refresh()}>
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </ConfirmAction>
                     )}
                   </TableCell>
                 </TableRow>
@@ -273,86 +299,11 @@ function FilesView({ patientId, currentFolderId, folders, files, permissions }: 
           </Table>
         </div>
       )}
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------------------------------
-// NOTES VIEW
-// ------------------------------------------------------------------------------------------
-function NotesView({ patientId, notes, permissions }: Omit<DetailProps, 'currentFolderId' | 'folders' | 'files'>) {
-  const [content, setContent] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleAddNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (permissions === 'view' || !content.trim()) return;
-
-    setIsSubmitting(true);
-    const res = await addNote({ patientId, content });
-    setIsSubmitting(false);
-
-    if (!res.error) {
-      setContent('');
-    } else {
-      alert(res.error);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this note?')) return;
-    await deleteNote(id, patientId);
-  };
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        <h3 className="text-lg font-semibold border-b pb-2">Appointment History</h3>
-        
-        {notes.length === 0 ? (
-          <EmptyState 
-            icon={FileText} 
-            title="No notes yet" 
-            description="Keep track of appointment summaries, prescriptions, and observations here." 
-          />
-        ) : (
-          <div className="space-y-4">
-            {notes.map(note => (
-              <div key={note.id} className="p-4 rounded-lg border bg-white shadow-sm hover:border-blue-200 transition-colors group">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold text-gray-500 tracking-wider">
-                    {new Date(note.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                  </span>
-                  {permissions === 'edit' && (
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(note.id)} className="opacity-0 group-hover:opacity-100 text-red-500 h-6 px-2">
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">{note.content}</p>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="flex flex-wrap gap-6">
+        {([['filePage','Files',filePage,moreFiles],['folderPage','Folders',folderPage,moreFolders]] as const).map(([key,label,page,more])=><nav aria-label={`${label} pages`} key={key} className="flex items-center gap-2"><Button variant="outline" disabled={page<=1} onClick={()=>{ const params=new URLSearchParams(searchParams.toString());params.set(key,String(page-1));router.push(`?${params}`); }}>Previous {label.toLowerCase()}</Button><span className="text-sm">{label} page {page}</span><Button variant="outline" disabled={!more} onClick={()=>{ const params=new URLSearchParams(searchParams.toString());params.set(key,String(page+1));router.push(`?${params}`); }}>Next {label.toLowerCase()}</Button></nav>)}
       </div>
-
-      {permissions === 'edit' && (
-        <div className="bg-gray-50 p-4 rounded-lg border h-fit sticky top-24">
-          <h3 className="font-medium text-gray-900 mb-3">Add New Note</h3>
-          <form onSubmit={handleAddNote} className="space-y-3">
-            <Textarea 
-              className="resize-none min-h-[120px] text-sm" 
-              placeholder="e.g. Patient presents with mild headache. Prescribed..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-            />
-            <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-800 text-white">
-              {isSubmitting ? 'Saving...' : 'Save Note'}
-            </Button>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
+
+// ------------------------------------------------------------------------------------------

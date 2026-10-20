@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { resetPasswordSchema, type ResetPasswordInput } from "@/lib/schemas/auth.schema"
+import { AuthRepository } from '@/lib/repositories/auth.repository'
 
 export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
@@ -31,9 +32,7 @@ export default function ResetPasswordPage() {
     setError(null)
     
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password/update`,
-      })
+      const { error: resetError } = await new AuthRepository(supabase).resetPassword(data)
       
       if (resetError) throw resetError
       

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function PublicProfileLayout({
   children,
 }: {
@@ -7,12 +9,12 @@ export default function PublicProfileLayout({
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">{children}</main>
       <footer className="border-t bg-white py-4 text-center text-xs text-gray-400">
-        <a
+        <Link
           href="/"
           className="hover:text-blue-800 transition-colors"
         >
           MediLink
-        </a>{' '}
+        </Link>{' '}
         — The professional OS for physicians
       </footer>
     </div>

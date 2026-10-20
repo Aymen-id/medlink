@@ -28,6 +28,8 @@ export type CreateFolderInput = {
 
 export type ListFolderOptions = {
   parentId?: string | null;
+  page?:number;
+  limit?:number;
 };
 
 export class FolderRepository {
@@ -87,7 +89,9 @@ export class FolderRepository {
       }
     }
 
-    const { data, error } = await query.order('name', { ascending: true });
+    query=query.order('name', { ascending: true });
+    if(options?.page) query=query.order('id',{ ascending:true }).range((options.page-1)*(options.limit ?? 50),options.page*(options.limit ?? 50));
+    const { data, error } = await query;
 
     if (error) return { data: [], error: error.message };
     const rows = (data ?? []) as FolderRow[];

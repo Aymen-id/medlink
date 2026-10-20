@@ -11,6 +11,7 @@ type CurrentPlanProps = {
   subscription: Subscription | null;
   onManageBilling: () => void;
   loading?: boolean;
+  effectiveTier?:SubscriptionTier;
 };
 
 function getTierBadgeColor(tier: SubscriptionTier): string {
@@ -21,8 +22,8 @@ function getTierBadgeColor(tier: SubscriptionTier): string {
   }
 }
 
-export function CurrentPlan({ subscription, onManageBilling, loading }: CurrentPlanProps) {
-  const tier = subscription?.tier ?? 'free';
+export function CurrentPlan({ subscription, onManageBilling, loading,effectiveTier }: CurrentPlanProps) {
+  const tier = effectiveTier ?? (subscription && ['active','trialing'].includes(subscription.status) ? subscription.tier:'free');
   const display = TIER_DISPLAY[tier];
 
   return (
@@ -54,7 +55,7 @@ export function CurrentPlan({ subscription, onManageBilling, loading }: CurrentP
           <Badge className="bg-red-100 text-red-800">Payment Past Due</Badge>
         )}
 
-        {tier !== 'free' && subscription?.stripeCustomerId && (
+        {subscription?.stripeCustomerId && (
           <Button
             variant="outline"
             onClick={onManageBilling}

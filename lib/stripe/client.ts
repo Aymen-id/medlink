@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { getServerConfig } from '@/lib/config/server';
 
 let _stripe: Stripe | null = null;
 
@@ -10,14 +11,13 @@ let _stripe: Stripe | null = null;
 export function getStripe(): Stripe {
   if (_stripe) return _stripe;
 
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-  }
+  const key = getServerConfig('billing').STRIPE_SECRET_KEY;
 
   _stripe = new Stripe(key, {
     apiVersion: '2026-02-25.clover',
     typescript: true,
+    timeout:20_000,
+    maxNetworkRetries:1,
   });
 
   return _stripe;

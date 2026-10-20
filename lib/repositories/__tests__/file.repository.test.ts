@@ -61,92 +61,6 @@ describe('FileRepository', () => {
     repo = new FileRepository(mock.supabase, OWNER_ID);
   });
 
-  // -------- UPLOAD --------
-  describe('upload', () => {
-    it('should upload file to storage and insert a record into patient_files', async () => {
-      const fileBuffer = new ArrayBuffer(1024);
-      const file = new File([fileBuffer], 'blood-results.pdf', { type: 'application/pdf' });
-
-      mock.storageBucket.upload.mockResolvedValueOnce({
-        data: { path: `${OWNER_ID}/${PATIENT_ID}/blood-results.pdf` },
-        error: null,
-      });
-      mock.chainable.single.mockResolvedValueOnce({ data: sampleFile, error: null });
-
-      const result = await repo.upload({
-        patientId: PATIENT_ID,
-        file,
-        folderId: null,
-        tags: ['lab', 'blood'],
-      });
-
-      expect(mock.storage.from).toHaveBeenCalledWith('patient-files');
-      expect(mock.storageBucket.upload).toHaveBeenCalledWith(
-        expect.stringContaining(`${OWNER_ID}/${PATIENT_ID}/`),
-        file,
-        expect.objectContaining({ contentType: 'application/pdf' }),
-      );
-      expect(mock.from).toHaveBeenCalledWith('patient_files');
-      expect(mock.chainable.insert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          patient_id: PATIENT_ID,
-          file_name: 'blood-results.pdf',
-          tags: ['lab', 'blood'],
-        }),
-      );
-      expect(result.data).toBeDefined();
-      expect(result.error).toBeNull();
-    });
-
-    it('should return error when storage upload fails', async () => {
-      const file = new File([''], 'fail.pdf', { type: 'application/pdf' });
-
-      mock.storageBucket.upload.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'Storage quota exceeded' },
-      });
-
-      const result = await repo.upload({ patientId: PATIENT_ID, file });
-
-      expect(result.data).toBeNull();
-      expect(result.error).toBe('Storage quota exceeded');
-    });
-
-    it('should return error when DB insert fails after successful upload', async () => {
-      const file = new File(['data'], 'test.pdf', { type: 'application/pdf' });
-
-      mock.storageBucket.upload.mockResolvedValueOnce({
-        data: { path: 'some/path' },
-        error: null,
-      });
-      mock.chainable.single.mockResolvedValueOnce({
-        data: null,
-        error: { message: 'DB error' },
-      });
-
-      const result = await repo.upload({ patientId: PATIENT_ID, file });
-
-      expect(result.data).toBeNull();
-      expect(result.error).toBe('DB error');
-    });
-
-    it('should include folderId when provided', async () => {
-      const file = new File(['data'], 'scan.jpg', { type: 'image/jpeg' });
-
-      mock.storageBucket.upload.mockResolvedValueOnce({
-        data: { path: 'some/path' },
-        error: null,
-      });
-      mock.chainable.single.mockResolvedValueOnce({ data: { ...sampleFile, folder_id: FOLDER_ID }, error: null });
-
-      await repo.upload({ patientId: PATIENT_ID, file, folderId: FOLDER_ID });
-
-      expect(mock.chainable.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ folder_id: FOLDER_ID }),
-      );
-    });
-  });
-
   // -------- LIST BY PATIENT --------
   describe('listByPatient', () => {
     it('should list files for a specific patient', async () => {
@@ -197,21 +111,20 @@ describe('FileRepository', () => {
   // -------- SEARCH --------
   describe('search', () => {
     it('should search files by name across all patient files for the owner', async () => {
-      mock.chainable.order.mockResolvedValueOnce({
+      mock.rpc.mockResolvedValueOnce({
         data: [sampleFile],
         error: null,
       });
 
       const result = await repo.search('blood');
 
-      expect(mock.from).toHaveBeenCalledWith('patient_files');
-      expect(mock.chainable.ilike).toHaveBeenCalledWith('file_name', '%blood%');
+      expect(mock.rpc).toHaveBeenCalledWith('search_workspace_files',{ workspace_id:OWNER_ID,search_query:'blood',page_number:1,page_size:20 });
       expect(result.data).toHaveLength(1);
       expect(result.error).toBeNull();
     });
 
     it('should return empty array for no matches', async () => {
-      mock.chainable.order.mockResolvedValueOnce({ data: [], error: null });
+      mock.rpc.mockResolvedValueOnce({ data: [], error: null });
 
       const result = await repo.search('nonexistent');
 
@@ -301,7 +214,7 @@ describe('FileRepository', () => {
 
   // -------- DELETE --------
   describe('delete', () => {
-    it('should delete file from storage and database record', async () => {
+    it('deletes metadata transactionally so the SQL trigger queues Storage cleanup', async () => {
       // Build separate chainables for the fetch and delete calls
       const fetchChain = createChainable();
       const deleteChain = createChainable();
@@ -319,7 +232,7 @@ describe('FileRepository', () => {
 
       const result = await repo.delete(sampleFile.id);
 
-      expect(mock.storageBucket.remove).toHaveBeenCalledWith([sampleFile.storage_path]);
+      expect(mock.storageBucket.remove).not.toHaveBeenCalled();
       expect(result.error).toBeNull();
     });
 
@@ -339,7 +252,7 @@ describe('FileRepository', () => {
 
   // -------- GET SIGNED URL --------
   describe('getSignedUrl', () => {
-    it('should return a signed URL for a file', async () => {
+    it('returns an authenticated download route without minting a reusable bearer URL', async () => {
       mock.chainable.single.mockResolvedValueOnce({ data: sampleFile, error: null });
       mock.storageBucket.createSignedUrl.mockResolvedValueOnce({
         data: { signedUrl: 'https://storage.example.com/signed/path' },
@@ -348,12 +261,8 @@ describe('FileRepository', () => {
 
       const result = await repo.getSignedUrl(sampleFile.id);
 
-      expect(mock.storage.from).toHaveBeenCalledWith('patient-files');
-      expect(mock.storageBucket.createSignedUrl).toHaveBeenCalledWith(
-        sampleFile.storage_path,
-        3600,
-      );
-      expect(result.data).toBe('https://storage.example.com/signed/path');
+      expect(mock.storageBucket.createSignedUrl).not.toHaveBeenCalled();
+      expect(result.data).toBe(`/api/files/${sampleFile.id}/download`);
       expect(result.error).toBeNull();
     });
   });

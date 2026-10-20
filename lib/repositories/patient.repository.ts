@@ -116,15 +116,17 @@ export class PatientRepository {
     };
   }
 
-  async search(query: string): Promise<ApiResponse<Patient[]>> {
-    const pattern = `%${query}%`;
+  async search(query: string,page?:number,limit=20): Promise<ApiResponse<Patient[]>> {
+    const pattern = `%${query.replace(/[_%]/gu,value=>`\\${value}`)}%`;
 
-    const { data, error } = await this.supabase
+    let request = this.supabase
       .from('patients')
       .select()
       .eq('owner_id', this.ownerId)
-      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern}`)
+      .or(`first_name.ilike."${pattern}",last_name.ilike."${pattern}"`)
       .order('created_at', { ascending: false });
+    if(page) request=request.order('id',{ ascending:true }).range((page-1)*limit,page*limit);
+    const { data,error }=await request;
 
     if (error) return { data: [], error: error.message };
 

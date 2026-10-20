@@ -37,7 +37,7 @@ const proSubscriptionRow = {
   stripe_customer_id: 'cus_abc123',
   stripe_subscription_id: 'sub_abc123',
   tier: 'pro',
-  current_period_end: '2026-02-01T00:00:00Z',
+  current_period_end: '2099-02-01T00:00:00Z',
 };
 
 
@@ -95,6 +95,12 @@ describe('SubscriptionRepository', () => {
 
   // ---- GET TIER ----
   describe('getTier', () => {
+    it('does not grant paid access for canceled, past-due or expired subscriptions',async()=>{
+      for(const row of [{ ...proSubscriptionRow,status:'canceled' },{ ...proSubscriptionRow,status:'past_due' },{ ...proSubscriptionRow,current_period_end:'2020-01-01T00:00:00Z' }]) {
+        mock.chainable.maybeSingle.mockResolvedValueOnce({ data:row,error:null });
+        expect(await repo.getTier()).toBe('free');
+      }
+    });
     it('should return "pro" for a pro subscriber', async () => {
       mock.chainable.maybeSingle.mockResolvedValueOnce({
         data: proSubscriptionRow,

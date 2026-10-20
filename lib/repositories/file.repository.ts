@@ -30,21 +30,17 @@ function mapRowToFile(row: FileRow): PatientFile {
 
 const STORAGE_BUCKET = 'patient-files';
 
-export type UploadFileParams = {
-  patientId: string;
-  file: File;
-  folderId?: string | null;
-  tags?: string[];
-};
-
 export type ListFileOptions = {
   folderId?: string | null;
+  page?:number;
+  limit?:number;
 };
 
 export class FileRepository {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly ownerId: string,
+    private readonly storageClient: SupabaseClient = supabase,
   ) {}
 
   /**
@@ -61,45 +57,6 @@ export class FileRepository {
 
     if (error) return { data: null, error: error.message };
     return { data: data as FileRow, error: null };
-  }
-
-  // ---- UPLOAD ----
-  async upload(params: UploadFileParams): Promise<ApiResponse<PatientFile>> {
-    const { patientId, file, folderId, tags } = params;
-
-    // Build storage path: owner_id/patient_id/timestamp_filename
-    const timestamp = Date.now();
-    const storagePath = `${this.ownerId}/${patientId}/${timestamp}_${file.name}`;
-
-    // 1. Upload to Supabase Storage
-    const { data: storageData, error: storageError } = await this.supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(storagePath, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-
-    if (storageError) {
-      return { data: null, error: storageError.message };
-    }
-
-    // 2. Insert record into patient_files
-    const { data, error } = await this.supabase
-      .from('patient_files')
-      .insert({
-        patient_id: patientId,
-        folder_id: folderId ?? null,
-        file_name: file.name,
-        storage_path: storageData.path,
-        mime_type: file.type,
-        size_bytes: file.size,
-        tags: tags ?? [],
-      })
-      .select()
-      .single();
-
-    if (error) return { data: null, error: error.message };
-    return { data: mapRowToFile(data as FileRow), error: null };
   }
 
   // ---- LIST BY PATIENT ----
@@ -121,7 +78,9 @@ export class FileRepository {
       }
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    query=query.order('created_at', { ascending: false });
+    if(options?.page) query=query.order('id',{ ascending:true }).range((options.page-1)*(options.limit ?? 50),options.page*(options.limit ?? 50));
+    const { data, error } = await query;
 
     if (error) return { data: [], error: error.message };
     const rows = (data ?? []) as FileRow[];
@@ -129,13 +88,8 @@ export class FileRepository {
   }
 
   // ---- SEARCH BY NAME ----
-  async search(query: string): Promise<ApiResponse<PatientFile[]>> {
-    const { data, error } = await this.supabase
-      .from('patient_files')
-      .select('*, patients!inner(owner_id)')
-      .eq('patients.owner_id', this.ownerId)
-      .ilike('file_name', `%${query}%`)
-      .order('created_at', { ascending: false });
+  async search(query: string,page=1,limit=20): Promise<ApiResponse<PatientFile[]>> {
+    const { data,error }=await this.supabase.rpc('search_workspace_files',{ workspace_id:this.ownerId,search_query:query,page_number:page,page_size:limit });
 
     if (error) return { data: [], error: error.message };
     const rows = (data ?? []) as FileRow[];
@@ -161,6 +115,12 @@ export class FileRepository {
   }
 
   // ---- UPDATE TAGS ----
+  async updateMetadata(fileId:string,input:{ tags:string[];folderId:string | null }):Promise<ApiResponse<PatientFile>> {
+    const owned=await this.fetchOwnedFile(fileId);
+    if(!owned.data || owned.error) return { data:null,error:owned.error ?? 'File not found' };
+    const { data,error }=await this.supabase.from('patient_files').update({ tags:input.tags,folder_id:input.folderId }).eq('id',fileId).select().single();
+    return error ? { data:null,error:error.message }:{ data:mapRowToFile(data as FileRow),error:null };
+  }
   async updateTags(
     fileId: string,
     tags: string[],
@@ -207,14 +167,8 @@ export class FileRepository {
 
     if (fetchError || !ownedFile) return { error: fetchError ?? 'File not found' };
 
-    // 2. Remove from storage
-    const { error: storageError } = await this.supabase.storage
-      .from(STORAGE_BUCKET)
-      .remove([ownedFile.storage_path]);
-
-    if (storageError) return { error: storageError.message };
-
-    // 3. Delete DB record
+    // A database trigger queues physical removal atomically with metadata deletion.
+    // Keep the retry entry if Storage is unavailable.
     const { error: deleteError } = await this.supabase
       .from('patient_files')
       .delete()
@@ -226,20 +180,22 @@ export class FileRepository {
   // ---- GET SIGNED URL ----
   async getSignedUrl(
     fileId: string,
-    expiresInSeconds = 3600,
   ): Promise<ApiResponse<string>> {
     // 1. Fetch the file with ownership verification
     const { data: ownedFile, error: fetchError } = await this.fetchOwnedFile(fileId);
 
     if (fetchError || !ownedFile) return { data: null, error: fetchError ?? 'File not found' };
 
-    // 2. Create signed URL
-    const { data, error } = await this.supabase.storage
-      .from(STORAGE_BUCKET)
-      .createSignedUrl(ownedFile.storage_path, expiresInSeconds);
+    // Historical API name retained; every download now rechecks current membership.
+    return { data:`/api/files/${encodeURIComponent(fileId)}/download`,error:null };
+  }
 
-    if (error) return { data: null, error: error.message };
-    return { data: data.signedUrl, error: null };
+  async downloadFile(fileId:string):Promise<ApiResponse<{ blob:Blob;fileName:string }>> {
+    const { data:file,error }=await this.fetchOwnedFile(fileId);
+    if(error || !file) return { data:null,error:error ?? 'File not found' };
+    const { data:blob,error:storageError }=await this.storageClient.storage.from(STORAGE_BUCKET).download(file.storage_path);
+    if(storageError || !blob) return { data:null,error:storageError?.message ?? 'Download failed' };
+    return { data:{ blob,fileName:file.file_name },error:null };
   }
 
   // ---- COUNT BY OWNER ----

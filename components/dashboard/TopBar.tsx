@@ -48,15 +48,26 @@ export function TopBar({ user }: TopBarProps) {
       <MobileSidebar user={user} />
 
       {/* Search */}
-      <div className="relative flex-1 max-w-md">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          const q = new FormData(e.currentTarget).get("q")
+          if (typeof q === "string" && q.trim()) {
+            router.push(`/search?q=${encodeURIComponent(q.trim())}`)
+          }
+        }}
+        className="relative flex-1 max-w-md"
+      >
         <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
+          name="q"
           placeholder="Search patients, files..."
           className="pl-9 h-8 bg-muted/50 border-0 focus-visible:ring-1"
           aria-label="Search patients and files"
+          data-testid="search-input"
         />
-      </div>
+      </form>
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -68,8 +79,9 @@ export function TopBar({ user }: TopBarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full"
+              className="size-11 rounded-full transition-colors md:size-8"
               aria-label="User menu"
+              data-testid="user-menu-trigger"
             />
           }
         >
@@ -80,29 +92,33 @@ export function TopBar({ user }: TopBarProps) {
             <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={8}>
-          <DropdownMenuLabel>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{user.displayName}</span>
-              <span className="text-xs text-muted-foreground">
-                {user.email}
-              </span>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+        <DropdownMenuContent align="end" sideOffset={8} className="w-72 max-w-[calc(100vw-2rem)]">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <User className="size-4" />
-              Profile
+            <DropdownMenuLabel className="px-3 py-2">
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Current workspace</span>
+                <span className="break-words text-sm font-medium text-foreground">{user.displayName}</span>
+                <span className="mt-2 text-xs text-muted-foreground">Signed in as</span>
+                <span className="break-all text-sm font-normal text-foreground">{user.email}</span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="min-h-11 gap-3 px-3 md:min-h-8" onClick={() => router.push("/settings/profile")}>
+              <User aria-hidden="true" className="size-4" />
+              Public Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
-              <Settings className="size-4" />
+            <DropdownMenuItem className="min-h-11 gap-3 px-3 md:min-h-8" onClick={() => router.push("/settings")}>
+              <Settings aria-hidden="true" className="size-4" />
               Settings
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-            <LogOut className="size-4" />
+          <DropdownMenuItem
+            className="min-h-11 gap-3 px-3 md:min-h-8"
+            onClick={handleLogout}
+            data-testid="user-menu-logout"
+          >
+            <LogOut aria-hidden="true" className="size-4" />
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>

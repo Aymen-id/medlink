@@ -12,6 +12,7 @@ type SubscriptionRow = {
   current_period_end: string | null;
   created_at: string;
   updated_at: string;
+  billing_interval?:'monthly' | 'annual' | null;
 };
 
 type StripeData = {
@@ -33,6 +34,7 @@ function mapRowToSubscription(row: SubscriptionRow): Subscription {
     currentPeriodEnd: row.current_period_end ?? '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    billingInterval:row.billing_interval ?? null,
   };
 }
 
@@ -40,6 +42,7 @@ export class SubscriptionRepository {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly userId: string,
+    private readonly billingAccountId?:string,
   ) {}
 
   /**
@@ -49,7 +52,7 @@ export class SubscriptionRepository {
     const { data, error } = await this.supabase
       .from('subscriptions')
       .select()
-      .eq('user_id', this.userId)
+      .eq(this.billingAccountId ? 'billing_account_id':'user_id', this.billingAccountId ?? this.userId)
       .maybeSingle();
 
     if (error) return { data: null, error: error.message };
@@ -62,7 +65,8 @@ export class SubscriptionRepository {
    */
   async getTier(): Promise<SubscriptionTier> {
     const { data } = await this.findByUserId();
-    return data?.tier ?? 'free';
+    if(!data || !['active','trialing'].includes(data.status) || (data.currentPeriodEnd && Date.parse(data.currentPeriodEnd)<=Date.now())) return 'free';
+    return data.tier;
   }
 
   /**

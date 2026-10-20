@@ -1,5 +1,7 @@
 import { getStripe } from './client';
-import { STRIPE_PRICE_IDS } from './config';
+import { getStripePrices } from './prices';
+import { getAppOrigin } from '@/lib/config/public';
+import { getServerConfig } from '@/lib/config/server';
 import type { SubscriptionTier } from '@/types';
 import type { BillingInterval } from './config';
 
@@ -8,12 +10,14 @@ import type { BillingInterval } from './config';
  * Returns the checkout URL that the user should be redirected to.
  */
 export async function createCheckoutSession(
-  userId: string,
-  email: string,
+  billingAccountId: string,
+  customerId: string,
   tier: Exclude<SubscriptionTier, 'free'>,
   billingInterval: BillingInterval,
+  attemptId:string,
+  verifyBeforeReturn?:()=>Promise<void>,
 ): Promise<string> {
-  const priceId = STRIPE_PRICE_IDS[tier][billingInterval];
+  const priceId = getStripePrices()[tier][billingInterval];
 
   if (!priceId) {
     throw new Error(`No price ID configured for ${tier}/${billingInterval}`);
@@ -21,7 +25,9 @@ export async function createCheckoutSession(
 
   const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
-    customer_email: email,
+    customer: customerId,
+    client_reference_id:billingAccountId,
+    subscription_data:{ metadata:{ billingAccountId } },
     line_items: [
       {
         price: priceId,
@@ -29,15 +35,22 @@ export async function createCheckoutSession(
       },
     ],
     metadata: {
-      userId,
+      billingAccountId,
+      priceId,
       tier,
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings/billing?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings/billing?canceled=true`,
-  });
+    success_url: `${getAppOrigin()}/settings/billing?success=true`,
+    cancel_url: `${getAppOrigin()}/settings/billing?canceled=true`,
+    expires_at:Math.floor(Date.now()/1000)+30*60,
+  },{ idempotencyKey:`medilink-checkout:${billingAccountId}:${attemptId}` });
 
   if (!session.url) {
     throw new Error('Failed to create checkout session');
+  }
+  try { await verifyBeforeReturn?.(); }
+  catch(error) {
+    await getStripe().checkout.sessions.expire(session.id).catch(()=>undefined);
+    throw error;
   }
 
   return session.url;
@@ -47,10 +60,13 @@ export async function createCheckoutSession(
  * Creates a Stripe Billing Portal session for an existing customer.
  * Returns the portal URL for managing subscriptions.
  */
-export async function createPortalSession(stripeCustomerId: string): Promise<string> {
+export async function createPortalSession(stripeCustomerId: string,change?:{ subscriptionId:string;itemId:string;priceId:string }): Promise<string> {
+  const configuration=getServerConfig('billing').STRIPE_PORTAL_CONFIGURATION_ID;
   const session = await getStripe().billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/settings/billing`,
+    return_url: `${getAppOrigin()}/settings/billing`,
+    ...(configuration ? { configuration }:{}),
+    ...(change ? { flow_data:{ type:'subscription_update_confirm' as const,subscription_update_confirm:{ subscription:change.subscriptionId,items:[{ id:change.itemId,price:change.priceId,quantity:1 }] } } }:{}),
   });
 
   return session.url;

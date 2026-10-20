@@ -17,7 +17,7 @@ export async function updateProfile(input: UpdateProfileInput) {
     return { data: null, error: parsed.error.issues[0].message };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, context.ownerId);
 
   // Check slug availability (exclude own profile)
@@ -40,7 +40,7 @@ export async function checkSlug(slug: string) {
   const context = await getUserContext();
   if (!context) return { available: false, error: 'Unauthorized' };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const repo = new ProfileRepository(supabase, context.ownerId);
 
   const available = await repo.checkSlugAvailability(slug, context.ownerId);
